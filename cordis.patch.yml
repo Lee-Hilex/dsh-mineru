@@ -1,0 +1,8 @@
+# dsh-mineru bundle patch: one host plugin row that also carries the Web client
+# half (package.json's dsh.client points at exports["./client"]). The row owns
+# tools, the mineru-tools skill, the "mineru" settings namespace, DSH Credential
+# resolution, and (Web only) /plugin/mineru HTTP routes.
+- insert:
+    - id: mineru
+      name: 'dsh-mineru'
+      config: {}

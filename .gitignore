@@ -1,0 +1,5 @@
+node_modules/
+*.tgz
+*.log
+.dsh-mineru/
+.DS_Store
