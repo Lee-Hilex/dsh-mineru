@@ -14,7 +14,7 @@
 
 - **双 API 模式自动选择** — 有 Token 用精准解析 API（≤200MB、≤200 页，模型 `pipeline`/`vlm`/`MinerU-HTML`，Zip 输出 `full.md` + JSON + 可选 docx/html/latex）；无 Token 用 Agent 轻量解析 API（≤10MB、≤20 页，仅 Markdown，免登录）。
 - **四个工具、渐进式曝光** — `mineru_parse`、`mineru_batch_parse`（自动分批）、`mineru_task`（超时续收），外加 `mineru-tools` 技能；平时只有极小的 `mineru_activate` 引导工具可见，激活后才挂载完整工具集。
-- **拖拽上传，纯文本模型也能用** — 把 PDF/Office 文档/图片直接拖进聊天窗口：文件先落到会话工作区，随后自动发送引用路径的文本解析请求，完全绕开纯文本模型会拒绝的原生图片附件通道。
+- **拖拽上传，纯文本模型也能用** — 把 PDF/Office 文档/图片直接拖进聊天窗口：文件先落到会话工作区，其路径会**填入输入框草稿（不自动发送）**，由你补充需求后自行发送，完全绕开纯文本模型会拒绝的原生图片附件通道。
 - **限流感知** — 内置令牌桶（提交 40 次/分钟、查询 900 次/分钟）、每日提交计数、HTTP 429 按 `Retry-After` 退避重试、全部错误码映射为可操作提示。
 - **Artifact 与 Web 界面** — 结果解包到 `<workspace>/.dsh-mineru/artifacts/`，附带 HMAC 签名预览链接；Web 设置有专属卡片（Token 只写、高级设置折叠、操作即时反馈）与专属工具结果卡片。
 

@@ -14,7 +14,7 @@ English | [简体中文](README.zh.md)
 
 - **Dual API modes, auto-selected** — with a token the plugin uses the Precision API (up to 200 MB / 200 pages, models `pipeline`/`vlm`/`MinerU-HTML`, Zip output with `full.md` + JSON + optional docx/html/latex); without a token it uses the Agent API (up to 10 MB / 20 pages, Markdown-only, no sign-in).
 - **Four tools, progressive exposure** — `mineru_parse`, `mineru_batch_parse` (auto-chunked batches), `mineru_task` (resume after timeout), plus the `mineru-tools` skill; only the tiny `mineru_activate` bootstrap is visible until the agent activates the toolset.
-- **Drag-and-drop uploads that work with text-only models** — drop PDFs/Office documents/images into the chat; files land in the session workspace and a text prompt referencing their paths is sent automatically, bypassing the native image-attachment channel that text-only models reject.
+- **Drag-and-drop uploads that work with text-only models** — drop PDFs/Office documents/images into the chat; files land in the session workspace and their paths are filled into the composer draft (never auto-sent) — you add your own request and press send, bypassing the native image-attachment channel that text-only models reject.
 - **Rate-limit aware** — built-in token buckets (40 submits/min, 900 queries/min), daily submit accounting, `Retry-After` backoff on HTTP 429, and actionable messages for every MinerU error code.
 - **Artifacts & Web UI** — results are extracted under `<workspace>/.dsh-mineru/artifacts/` with HMAC-signed preview URLs, a dedicated Web Settings card (write-only token, collapsible advanced section, busy/result feedback), and custom tool-result cards.
 
