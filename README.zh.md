@@ -54,25 +54,44 @@ dsh-mineru 把 [MinerU](https://mineru.net)（OpenDataLab 出品的高精度文�
 
 ### 第 1 步：安装
 
-前置条件：DeepSeek Harness `0.1.0-rc.6`（或兼容的 `0.1.x`），且 `dsh` 命令可用。
+> **Note**: 需要已安装 DeepSeek Harness（`0.1.0-rc.6` 或兼容的 `0.1.x`），且 `dsh` 命令可用。
+
+**从 npm 安装（推荐）**
 
 ```bash
-# Web 界面使用
-dsh plugin --profile web add dsh-mineru
-
-# 无头（Headless）模式使用
-dsh plugin --profile headless add dsh-mineru
+dsh plugin --profile web add dsh-mineru        # Web 界面使用
+dsh plugin --profile headless add dsh-mineru   # 无头（Headless）模式使用
 ```
 
-重启 Web profile 后，在 **设置 → 插件 → MinerU 解析** 中即可看到本插件。
-
-本地开发版用打包好的 tgz 安装（见 [开发与发布](#开发与发布)）：
+**从源码构建**（开发 / 预览最新改动）
 
 ```bash
-dsh plugin --profile web add <路径>/dsh-mineru-0.1.8.tgz
+git clone git@github.com:Lee-Hilex/dsh-mineru.git
+cd dsh-mineru
+npm install        # 安装 peer 依赖（本包无构建步骤，无需 build）
+npm pack           # 产出 dsh-mineru-<version>.tgz
+dsh plugin --profile web add ./dsh-mineru-<version>.tgz
 ```
 
-### 第 2 步：配置（可选）
+修改源码后重新 `npm pack` 并重装即可。注意本地安装请用 tgz（`pnpm link:` 安装会使 `@deepseek-ai` 依赖解析脱离 profile）。
+
+### 第 2 步：验证安装
+
+```bash
+dsh --profile web --dump-config | grep -A 2 "id: mineru"
+```
+
+期望输出（`# ==` 注释行 + 你的插件行）：
+
+```
+# == dsh-mineru
+  - id: mineru
+    name: dsh-mineru
+```
+
+然后重启 Web profile（`dsh web`），在 **设置 → 插件 → MinerU 解析** 中即可看到本插件。
+
+### 第 3 步：配置（可选）
 
 **不配 Token 也能用**（自动走 Agent 轻量解析）。配 Token 可以解锁完整能力（精准解析 + 批量 + HTML + 更多格式）：
 
@@ -81,7 +100,7 @@ dsh plugin --profile web add <路径>/dsh-mineru-0.1.8.tgz
 
 Token 每次调用时实时解析，**轮换后无需重启立即生效**。Token 去哪领：<https://mineru.net> 注册后到 API 管理页面获取。
 
-### 第 3 步：开始使用
+### 第 4 步：开始使用
 
 **Web 界面**（推荐方式，支持拖拽）：
 
@@ -91,7 +110,13 @@ Token 每次调用时实时解析，**轮换后无需重启立即生效**。Toke
 
 **URL 解析**：直接告诉 Agent「解析这个网页/文档：https://example.com/paper.pdf」即可。
 
-**Headless / CLI**：Agent 看到文档路径或 URL 后会自动调用工具；也可以在会话中输入 `/mineru-tools` 加载使用说明技能。
+**Headless 快速验证（冒烟测试）**：一次性任务走 headless profile：
+
+```bash
+dsh --profile headless "把 C:/docs/sample.pdf 解析成 Markdown，并总结前 3 段"
+```
+
+Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/mineru-tools` 加载使用说明技能。
 
 ## 两种 API 模式
 

@@ -54,25 +54,44 @@ Typical use cases:
 
 ### Step 1: Install
 
-Prerequisites: DeepSeek Harness `0.1.0-rc.6` (or a compatible `0.1.x`) with the `dsh` CLI available.
+> **Note**: Requires an existing DeepSeek Harness installation (`0.1.0-rc.6` or a compatible `0.1.x`) with the `dsh` CLI available.
+
+**From npm (recommended)**
 
 ```bash
-# Web profile
-dsh plugin --profile web add dsh-mineru
-
-# Headless profile
-dsh plugin --profile headless add dsh-mineru
+dsh plugin --profile web add dsh-mineru        # Web profile
+dsh plugin --profile headless add dsh-mineru   # Headless profile
 ```
 
-Restart a running Web profile, then open **Settings → Plugins → MinerU 解析**.
-
-For a local build, install from the packed tarball (see [Development & publishing](#development--publishing)):
+**Build from source** (development / preview latest changes)
 
 ```bash
-dsh plugin --profile web add <path>/dsh-mineru-0.1.8.tgz
+git clone git@github.com:Lee-Hilex/dsh-mineru.git
+cd dsh-mineru
+npm install        # installs peer deps (no build step for this package)
+npm pack           # produces dsh-mineru-<version>.tgz
+dsh plugin --profile web add ./dsh-mineru-<version>.tgz
 ```
 
-### Step 2: Configure (optional)
+Run `npm pack` again and re-install after changing the source. Local installs must use the tarball (`pnpm link:` installs resolve `@deepseek-ai` peers outside the profile).
+
+### Step 2: Verify the install
+
+```bash
+dsh --profile web --dump-config | grep -A 2 "id: mineru"
+```
+
+Expected output (a `# ==` comment line plus your plugin row):
+
+```
+# == dsh-mineru
+  - id: mineru
+    name: dsh-mineru
+```
+
+Then restart a running Web profile (`dsh web`) and open **Settings → Plugins → MinerU 解析**.
+
+### Step 3: Configure (optional)
 
 **No token needed to get started** — the plugin automatically falls back to the tokenless Agent API. Add a token to unlock the full feature set (Precision API, batch parsing, HTML, more formats):
 
@@ -81,7 +100,7 @@ dsh plugin --profile web add <path>/dsh-mineru-0.1.8.tgz
 
 The token is resolved once per operation — **rotations take effect on the very next call without a restart**. Get a token by registering at <https://mineru.net> (API management page).
 
-### Step 3: Use it
+### Step 4: Use it
 
 **Web UI** (drag-and-drop friendly):
 
@@ -91,7 +110,13 @@ The token is resolved once per operation — **rotations take effect on the very
 
 **URL parsing**: just tell the agent "parse this document: https://example.com/paper.pdf".
 
-**Headless / CLI**: the agent calls the tools automatically when it sees a workspace path or URL; you can also type `/mineru-tools` in a conversation to load the usage skill.
+**Headless smoke test**: one-off tasks run on the headless profile:
+
+```bash
+dsh --profile headless "Parse C:/docs/sample.pdf to Markdown and summarize the first 3 paragraphs"
+```
+
+Headless and Web share the same tool semantics; you can also type `/mineru-tools` in a conversation to load the usage skill.
 
 ## Two API modes
 
