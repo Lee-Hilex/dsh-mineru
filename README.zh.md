@@ -1,12 +1,17 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![version](https://img.shields.io/badge/version-0.1.7-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
 [![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
-> 仓库: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru)
+> 仓库: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru) · [更新日志](CHANGELOG.md)
 
 [English](README.md) | 简体中文
+
+## 目录
+
+- [特性一览](#特性一览) · [安装](#安装) · [两种 API 模式](#两种-api-模式) · [工具](#工具) · [配置](#配置) · [限流与可靠性](#限流与可靠性) · [Web 界面](#web-界面) · [安全模型](#安全模型) · [开发](#开发) · [发布](#发布) · [贡献](#贡献) · [许可](#许可)
 
 **dsh-mineru** 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供基于 [MinerU](https://mineru.net) 的多模态全格式文档解析能力：PDF、Word、PowerPoint、Excel、HTML、图片 → 结构化 Markdown。**填写 MinerU Token 走 🎯 精准解析 API；Token 留空走 ⚡ Agent 轻量解析 API（免登录，IP 限频）。**
 

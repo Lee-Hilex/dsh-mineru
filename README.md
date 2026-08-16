@@ -1,12 +1,17 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![version](https://img.shields.io/badge/version-0.1.7-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
 [![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
-> Repository: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru)
+> Repository: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru) · [Changelog](CHANGELOG.md)
 
 English | [简体中文](README.zh.md)
+
+## Contents
+
+- [Highlights](#highlights) · [Install](#install) · [Two API modes](#two-api-modes) · [Tools](#tools) · [Configure](#configure) · [Rate limits & reliability](#rate-limits--reliability) · [Web UI](#web-ui) · [Security model](#security-model) · [Development](#development) · [Publishing](#publishing) · [Contributing](#contributing) · [License](#license)
 
 **dsh-mineru** brings [MinerU](https://mineru.net)-powered multimodal, full-format document parsing to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): PDF, Word, PowerPoint, Excel, HTML, and images all become structured Markdown. Provide a MinerU token to use the Precision API, or leave it blank to use the tokenless Agent API.
 
