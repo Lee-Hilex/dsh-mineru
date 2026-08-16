@@ -1,7 +1,7 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.1.8-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
+[![version](https://img.shields.io/badge/version-0.1.9-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
 [![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 

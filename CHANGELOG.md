@@ -4,7 +4,13 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- 无（当前为最新发布版本 0.1.8）
+- 无（当前为最新发布版本 0.1.9）
+
+## [0.1.9] - 2026-08-16
+
+### Docs
+
+- 快速开始章节按官方插件 README 规范重构：安装拆分为「从 npm 安装（推荐）」与「从源码构建」双通道；新增第 2 步 `dsh --profile web --dump-config` 验证安装；新增 headless 冒烟测试示例；前置条件改为 Note 提示（中英两版同步）。
 
 ## [0.1.8] - 2026-08-16
 
@@ -58,6 +64,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.9]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.9
 [0.1.8]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.8
 [0.1.7]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.7
 [0.1.6]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.6
