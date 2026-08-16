@@ -4,7 +4,16 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- 无（当前为最新发布版本 0.1.7）
+- 无（当前为最新发布版本 0.1.8）
+
+## [0.1.8] - 2026-08-16
+
+### Docs
+
+- 重写双语 README 为详细版：新增三步快速开始、工具完整参数表、22 项配置参考、错误码速查与 FAQ（中英两版结构对称）。
+- 新增 `CHANGELOG.md`（Keep a Changelog）与 `RELEASE.md`（发布 SOP 清单）。
+- `CONTRIBUTING.md` 补充提交规范：commit message 描述一律使用英文。
+- `package.json` `files` 字段加入 `CHANGELOG.md` / `RELEASE.md`。
 
 ## [0.1.7] - 2026-08-16
 
@@ -49,6 +58,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.8]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.8
 [0.1.7]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.7
 [0.1.6]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.6
 [0.1.5]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.5

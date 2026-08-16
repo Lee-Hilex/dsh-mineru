@@ -1,7 +1,7 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.1.7-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
+[![version](https://img.shields.io/badge/version-0.1.8-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
 [![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
@@ -69,7 +69,7 @@ dsh plugin --profile headless add dsh-mineru
 本地开发版用打包好的 tgz 安装（见 [开发与发布](#开发与发布)）：
 
 ```bash
-dsh plugin --profile web add <路径>/dsh-mineru-0.1.7.tgz
+dsh plugin --profile web add <路径>/dsh-mineru-0.1.8.tgz
 ```
 
 ### 第 2 步：配置（可选）

@@ -1,7 +1,7 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.1.7-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
+[![version](https://img.shields.io/badge/version-0.1.8-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
 [![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
@@ -69,7 +69,7 @@ Restart a running Web profile, then open **Settings → Plugins → MinerU 解�
 For a local build, install from the packed tarball (see [Development & publishing](#development--publishing)):
 
 ```bash
-dsh plugin --profile web add <path>/dsh-mineru-0.1.7.tgz
+dsh plugin --profile web add <path>/dsh-mineru-0.1.8.tgz
 ```
 
 ### Step 2: Configure (optional)

@@ -20,9 +20,9 @@ Web profile 重启可复用 `D:\Users\Lee\Desktop\dsh\.dsh-restart\restart.ps1`�
 
 注意：本地路径直装（pnpm link）会使 @deepseek-ai 依赖解析脱离 profile，请用 tgz 安装。
 
-## 提交规范
+## 提交规范 (Commit conventions)
 
-- 提交信息格式：`<type>: <描述>[, 版本 X.Y.Z]`，`type` 取 `feat` / `fix` / `docs` / `refactor` / `chore`。
+- 提交信息格式：`<type>: <英文描述>[, 版本 X.Y.Z]`，`type` 取 `feat` / `fix` / `docs` / `refactor` / `chore`；**描述一律用英文**（如 `fix: drag-drop fills composer draft instead of auto-send`）。
 - 文档变更（README / CHANGELOG / CONTRIBUTING / RELEASE）与代码变更**必须同一次提交**，不要分开发。
 
 ## 发布流程

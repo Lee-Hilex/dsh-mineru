@@ -6,7 +6,7 @@
 
 - 遵循 [SemVer](https://semver.org/lang/zh-CN/)：`major.minor.patch`。
 - **唯一来源：`package.json` 的 `version` 字段**。`lib/` 内的 `'0.1.0'` 仅为 fallback，不要修改。
-- Git tag 格式：`v<version>`（如 `v0.1.7`）。
+- Git tag 格式：`v<version>`（如 `v0.1.8`）。
 
 ## 发布清单
 
@@ -45,7 +45,7 @@ dsh plugin --profile web add D:\Users\Lee\Desktop\dsh\dsh-mineru-<version>.tgz
 
 ```powershell
 git add -A
-git commit -m "docs: 发布 v<version>（CHANGELOG + 双语 README 同步）"
+git commit -m "docs: release v<version> (CHANGELOG + bilingual README sync)"
 git tag v<version>
 git push origin main --tags
 ```
