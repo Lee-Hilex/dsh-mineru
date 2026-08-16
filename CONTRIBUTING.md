@@ -1,3 +1,5 @@
+[English](README.md) · [简体中文](README.zh.md)
+
 # 贡献指南 (Contributing)
 
 欢迎提交 Issue 与 Pull Request. 开始前请阅读:
