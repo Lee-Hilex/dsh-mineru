@@ -4,10 +4,14 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
+- No changes yet (latest release is 0.1.10).
+
+## [0.1.10] - 2026-09-11
+
 ### Fixed
 
-- 修复在 DSH 0.1.5 行启动失败：`@deepseek-ai/dsh-settings` 已移除 `settingsNamespace()`，`lib/index.js` 改为直接传入小写命名空间 `'mineru'`（旧写法在 ESM 实例化阶段报错，并导致整棵插件树加载失败）。
-- `peerDependencies` 中 6 个 `@deepseek-ai/dsh-*` 范围由 `^0.1.0-rc.6` 提升到 `^0.1.5-rc.1`：按 semver 预发布规则，`0.1.5-rc.x` 无法满足旧范围，安装时会始终报告未满足的 peer。
+- Fix boot failure on the DSH 0.1.5 line: `@deepseek-ai/dsh-settings` dropped `settingsNamespace()`, so `lib/index.js` now registers the plain lowercase namespace `'mineru'` (the old import failed during ESM instantiation and took down the whole plugin tree). Fixes #1.
+- Raise the six `@deepseek-ai/dsh-*` `peerDependencies` ranges from `^0.1.0-rc.6` to `^0.1.5-rc.1`: under semver prerelease rules `0.1.5-rc.x` cannot satisfy the old range, so every install reported unmet peers.
 
 ## [0.1.9] - 2026-08-16
 
@@ -67,6 +71,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.10]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.9
 [0.1.8]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.8
 [0.1.7]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.7
