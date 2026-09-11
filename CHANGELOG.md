@@ -4,7 +4,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- 无（当前为最新发布版本 0.1.9）
+### Fixed
+
+- 修复在 DSH 0.1.5 行启动失败：`@deepseek-ai/dsh-settings` 已移除 `settingsNamespace()`，`lib/index.js` 改为直接传入小写命名空间 `'mineru'`（旧写法在 ESM 实例化阶段报错，并导致整棵插件树加载失败）。
+- `peerDependencies` 中 6 个 `@deepseek-ai/dsh-*` 范围由 `^0.1.0-rc.6` 提升到 `^0.1.5-rc.1`：按 semver 预发布规则，`0.1.5-rc.x` 无法满足旧范围，安装时会始终报告未满足的 peer。
 
 ## [0.1.9] - 2026-08-16
 
