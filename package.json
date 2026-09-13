@@ -35,10 +35,23 @@
         "slots",
         "connection",
         "sessions",
-        "conversation"
+        "conversation",
+        "locale"
       ],
       "platform": "web"
     }
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
