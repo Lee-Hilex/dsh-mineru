@@ -4,7 +4,9 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- No changes yet (latest release is 0.1.10).
+### Fixed
+
+- Fix invisible button labels in dark mode: the platform binds `--dsw-alias-brand-primary` to its near-black (light) / near-white (dark) foreground, so the primary buttons rendered white-on-white in dark themes. Primary buttons and the artifact preview link now use the platform accent token `--dsw-alias-brand-primary-new-colorprimary-new-color`. Fixes #3.
 
 ## [0.1.10] - 2026-09-11
 
