@@ -4,6 +4,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
+- No changes yet (latest release is 0.1.11).
+
+## [0.1.11] - 2026-09-13
+
 ### Fixed
 
 - Fix invisible button labels in dark mode: the platform binds `--dsw-alias-brand-primary` to its near-black (light) / near-white (dark) foreground, so the primary buttons rendered white-on-white in dark themes. Primary buttons and the artifact preview link now use the platform accent token `--dsw-alias-brand-primary-new-colorprimary-new-color`. Fixes #3.
@@ -73,6 +77,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.11]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.9
 [0.1.8]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.8
