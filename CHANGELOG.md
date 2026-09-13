@@ -4,7 +4,20 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- No changes yet (latest release is 0.1.11).
+- No changes yet (latest release is 0.1.12).
+
+## [0.1.12] - 2026-09-13
+
+### Added
+
+- Client UI i18n: every user-facing string (settings tab, tool cards, toasts, drag-drop bridge) now comes from zh/en dictionaries registered with the host `ctx.locale` service; the zh dict remains the fallback when the locale service is absent.
+- Vitest suite (`npm test`): rate limiter, daily counter, option resolution, HTML model forcing, and tool-registry shape (15 tests).
+- AGENTS.md contributor guide and DSH upgrade-tracking notes under docs/plans/.
+
+### Changed
+
+- RELEASE.md: packaging validation steps — the shipped client bundle must register with `window.__ModuleLoader__.load`, and bare `--dsw-alias-brand-primary` must not appear in `lib/client.js`.
+- package.json: `@deepseek-ai/schemastery` moved to direct dependencies; added `vitest` devDependency, `npm test` script and `engines.node >= 18`; client inject list now includes `locale`.
 
 ## [0.1.11] - 2026-09-13
 
@@ -77,6 +90,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.12]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.12
 [0.1.11]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.9
