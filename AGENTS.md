@@ -27,12 +27,19 @@ HTTP surface under `/plugin/mineru/*`.
   `window.__ModuleLoader__.load({ id: "dsh-mineru", factory })`. The `id` must
   stay `dsh-mineru` and the bundle must register — the host rejects clients
   that load without registering.
-- **Settings**: registered through the settings seam as the plain lowercase
-  namespace `'mineru'` — `ctx.settings.register('mineru', CONFIG_SCHEMA, …)`.
-  Do not import `settingsNamespace()` (removed in the DSH 0.1.5 line). Config
-  resolves schema defaults < composition base < user settings; the MinerU
-  token VALUE lives in DSH Credentials under `tokenCredential`
-  (default `MINERU_API_TOKEN`), never in settings or composition files.
+- **Settings**: DSH 2.x derives the card from the exported `Config` — do **not**
+  call `ctx.settings.register` (that service method was removed and now throws
+  `TypeError: ctx.settings.register is not a function`, which aborts the whole
+  activation). Every field is marked live with `live()` from `lib/config.js`,
+  which prefers `.volatile()` and falls back to `.extra('volatile', true)` on
+  schemastery < 3.18.4, because a profile can hoist an older copy. Live fields
+  arrive in `apply(ctx, config)` as volatile references: read them through
+  `plainConfig(config)` on every access (`state.getCfg()`), never once at load.
+  The card is keyed by the profile entry id, which `settingsNamespace(ctx)`
+  resolves for the HTTP surface. Config resolves schema defaults < composition
+  base < the profile entry patch; the MinerU token VALUE lives in DSH
+  Credentials under `tokenCredential` (default `MINERU_API_TOKEN`), never in
+  settings or composition files.
 - **Peers**: `@deepseek-ai/*` host peers are `^0.1.5-rc.1` (semver prerelease
   rules: `0.1.5-rc.x` cannot satisfy `^0.1.0-rc.6`).
 - **Commits**: `<type>: <English description>`; docs ride with the code change
@@ -51,8 +58,8 @@ HTTP surface under `/plugin/mineru/*`.
 
 | File | Role |
 |------|------|
-| `lib/index.js` | Cordis entry: `name = 'mineru'`, `inject = ['tools','skills','settings','credentials','agents']`, `Config` (Schemastery), `apply()` — registers settings namespace, limiters, artifact store, tools/skill, HTTP surface |
-| `lib/config.js` | `CONFIG_SCHEMA`, `DEFAULTS`, `validateConfig`, `resolveLoadConfig`, extension/language/model constants |
+| `lib/index.js` | Cordis entry: `name = 'mineru'`, `inject = ['tools','skills','settings','credentials','agents']`, `Config` (Schemastery), `apply()` — resolves the live config and settings namespace, limiters, artifact store, tools/skill, HTTP surface |
+| `lib/config.js` | `CONFIG_SCHEMA` (every field marked live), `live`, `plainConfig`, `unwrapField`, `DEFAULTS`, `validateConfig`, `resolveLoadConfig`, extension/language/model constants |
 | `lib/mineru-client.js` | `MineruClient` (official v4 + agent v1, 429 retry, polling, download), `RateLimiter`, `DailyCounter`, `MineruError`, `resolveOptions`, `effectiveModelFor` |
 | `lib/tools.js` | `defineTool` definitions: `buildActivateTool`, `buildParseTool`, `buildBatchTool`, `buildTaskTool`, `buildAgentTools` |
 | `lib/skill.js` | `mineru-tools` skill content (model-facing usage guide, limits, error-code table) |
@@ -105,7 +112,15 @@ web-auth (non-interactive terminals cannot complete it — see RELEASE.md).
 ## Known traps
 
 - `settingsNamespace()` no longer exists in `@deepseek-ai/dsh-settings` ≥0.1.5;
-  use the plain `'mineru'` string.
+  the local `settingsNamespace(ctx)` helper resolves the profile entry id
+  instead, and `'mineru'` is only its fallback.
+- `ctx.settings.register` was removed in DSH 2.x. Calling it throws
+  `TypeError: ctx.settings.register is not a function` **before** any tool or
+  skill is registered, so the whole plugin goes dead — and because the client
+  half still mounts, the settings card then fails with
+  `Failed to execute 'json' on 'Response': Unexpected end of JSON input`
+  (`/plugin/mineru/config` is not mounted, and the host answers unmounted routes
+  with `404` and an empty body). Never re-introduce it.
 - The client bundle must start by registering with
   `window.__ModuleLoader__.load` — a plain ESM bundle silently breaks the Web
   profile.
