@@ -4,6 +4,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
+- No changes yet (latest release is 0.1.13).
+
+## [0.1.13] - 2026-09-25
+
 ### Fixed
 
 - Fix total plugin failure on DSH 2.x: `ctx.settings.register` was removed from the settings service, so `apply()` threw `TypeError: ctx.settings.register is not a function` on its first statement and the entry never activated. Nothing was registered — no `mineru_*` tools, no `mineru-tools` skill, no `/plugin/mineru` routes — while the client half still mounted, so the settings card failed with `Failed to execute 'json' on 'Response': Unexpected end of JSON input` (the host answers an unmounted route with `404` and an empty body). The card is now derived from the exported `CONFIG_SCHEMA` the way DSH 2.x expects it.
@@ -104,6 +108,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.13]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.13
 [0.1.12]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.12
 [0.1.11]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.10
