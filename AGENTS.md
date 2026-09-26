@@ -27,19 +27,21 @@ HTTP surface under `/plugin/mineru/*`.
   `window.__ModuleLoader__.load({ id: "dsh-mineru", factory })`. The `id` must
   stay `dsh-mineru` and the bundle must register — the host rejects clients
   that load without registering.
-- **Settings**: DSH 2.x derives the card from the exported `Config` — do **not**
-  call `ctx.settings.register` (that service method was removed and now throws
-  `TypeError: ctx.settings.register is not a function`, which aborts the whole
-  activation). Every field is marked live with `live()` from `lib/config.js`,
-  which prefers `.volatile()` and falls back to `.extra('volatile', true)` on
-  schemastery < 3.18.4, because a profile can hoist an older copy. Live fields
-  arrive in `apply(ctx, config)` as volatile references: read them through
-  `plainConfig(config)` on every access (`state.getCfg()`), never once at load.
-  The card is keyed by the profile entry id, which `settingsNamespace(ctx)`
-  resolves for the HTTP surface. Config resolves schema defaults < composition
-  base < the profile entry patch; the MinerU token VALUE lives in DSH
-  Credentials under `tokenCredential` (default `MINERU_API_TOKEN`), never in
-  settings or composition files.
+- **Settings**: two host seams, selected in `apply()` by feature detection:
+  - DSH 0.1.5 (`typeof ctx.settings.register === 'function'`): register the
+    `'mineru'` namespace through the legacy scope seam (`base: config`,
+    `applies: 'live'`, `validate: validateConfig`) and read/write via the scope.
+  - DSH 2.x (no `register` — calling it throws `TypeError` and aborts the whole
+    activation): the card is derived from the exported `Config`, keyed by the
+    profile entry id (`settingsNamespace(ctx)`), and only `meta.volatile` fields
+    are offered. Every field is marked live with `live()` from `lib/config.js`,
+    which prefers `.volatile()` and falls back to `.extra('volatile', true)` on
+    schemastery < 3.18.4, because a profile can hoist an older copy. Live fields
+    arrive in `apply(ctx, config)` as volatile references: read them through
+    `plainConfig(config)` on every access (`state.getCfg()`), never once at load.
+  Config resolves schema defaults < composition base < the profile entry patch;
+  the MinerU token VALUE lives in DSH Credentials under `tokenCredential`
+  (default `MINERU_API_TOKEN`), never in settings or composition files.
 - **Peers**: `@deepseek-ai/*` host peers are `^0.1.5-rc.1` (semver prerelease
   rules: `0.1.5-rc.x` cannot satisfy `^0.1.0-rc.6`).
 - **Commits**: `<type>: <English description>`; docs ride with the code change

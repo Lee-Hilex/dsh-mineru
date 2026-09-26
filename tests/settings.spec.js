@@ -170,3 +170,53 @@ describe('/plugin/mineru/config', () => {
     expect(result.json.hint).toContain('meta.volatile');
   });
 });
+
+describe('legacy seam (DSH 0.1.5)', () => {
+  /** A settings provider that still exposes the 0.1.5 `register` seam. */
+  function makeLegacySettings() {
+    let value = { mode: 'agent' };
+    const registrations = [];
+    return {
+      registrations,
+      value() { return value; },
+      register(ns, schema, options) {
+        registrations.push({ ns, schema, options });
+        return { get: () => value, update: (patch) => { value = { ...value, ...patch }; } };
+      },
+      describe: () => [{ ns: 'mineru', revision: 0, value, base: {}, user: {}, applies: 'live', secrets: [] }],
+      async update(ns, patch) { value = { ...value, ...patch }; },
+    };
+  }
+
+  /** Mount the routes through the legacy provider and return the handler. */
+  function legacyMount(settings, config) {
+    const webServer = makeWebServer();
+    const ctx = makeCtx({
+      settings,
+      credentials: { resolve: async () => undefined, describe: async () => ({ configured: false }) },
+      webServer,
+    });
+    apply(ctx, config);
+    expect(webServer.routes).toHaveLength(1);
+    return webServer.routes[0].handler;
+  }
+
+  it('registers the mineru namespace when ctx.settings.register exists', () => {
+    const settings = makeLegacySettings();
+    const ctx = makeCtx({ settings, credentials: { resolve: async () => undefined, describe: async () => ({}) } });
+    apply(ctx, { mode: 'auto' });
+    expect(settings.registrations).toHaveLength(1);
+    expect(settings.registrations[0].ns).toBe('mineru');
+    expect(settings.registrations[0].options.applies).toBe('live');
+    expect(ctx.registeredSkills()[0].name).toBe('mineru-tools');
+  });
+
+  it('serves /config from the registered legacy scope', async () => {
+    const settings = makeLegacySettings();
+    const handler = legacyMount(settings, { mode: 'auto' });
+    const result = await call(handler, { url: '/plugin/mineru/config' });
+    expect(result.status).toBe(200);
+    expect(result.json.ok).toBe(true);
+    expect(result.json.value).toEqual({ mode: 'agent' });
+  });
+});

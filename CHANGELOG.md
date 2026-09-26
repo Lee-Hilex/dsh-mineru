@@ -13,11 +13,12 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 - Every `CONFIG_SCHEMA` field is marked live through the new `live()` helper, which prefers `.volatile()` and falls back to `.extra('volatile', true)`. DSH only offers the fields carrying `meta.volatile`, and an unguarded `.volatile()` would itself fail activation on schemastery < 3.18.4 — a version a profile can hoist above the installation's copy.
 - `state.getCfg()` and `collectFacts()` re-project the entry config on every read (`plainConfig`), because live fields arrive as cosmokit volatile references rather than plain values. A settings write therefore still reaches the next call without a restart, and `exposeMode` stays a load-time switch.
 - `lib/http.js` looks the card up under the profile entry id (`settingsNamespace(ctx)`, falling back to `'mineru'`) instead of the hard-coded `'mineru'` string, and `GET /plugin/mineru/config` now answers `503` with a `hint` when the card does not exist, instead of a `200` carrying an empty config.
+- DSH 0.1.5 compatibility is retained through feature detection: when `ctx.settings.register` exists, the legacy scope seam is still used (register `'mineru'` + scope read/write), so settings cards and persistence keep working for users who have not upgraded.
 - Docs: AGENTS.md settings convention and known traps, plus a migration note under `docs/plans/`.
 
 ### Added
 
-- `tests/settings.spec.js`: the schema must flag every field volatile, a settings service **without** `register` must still activate the plugin and register its tools and skill, `settingsNamespace` must follow the entry id, and `/config` must explain a missing card. The stub settings service throws if `register` is called, so the regression cannot return silently.
+- `tests/settings.spec.js`: the schema must flag every field volatile, a settings service **without** `register` must still activate the plugin and register its tools and skill, `settingsNamespace` must follow the entry id, `/config` must explain a missing card, and a settings service **with** `register` (DSH 0.1.5) must register the `'mineru'` namespace and serve `/config` through the legacy scope. The stub settings service throws if `register` is called, so the 2.x regression cannot return silently.
 
 ## [0.1.12] - 2026-09-13
 
