@@ -18,6 +18,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 - A precision upload that settles as `failed` now raises the server's own reason (mapped `err_code`, else `err_msg`) as `MINERU_PARSE_FAILED`, the way `waitTask` already did, instead of the collector reporting a bare `state=failed`.
 - Docs: bilingual README (page limits, `pageRanges`, long-PDF section, error table), the bundled `mineru-tools` skill content, and the AGENTS.md file map.
 
+### Security
+
+- Disclose that content leaves the machine: every parse (both Precision and Agent modes) uploads the full source file to a remote MinerU service and downloads the result, with no fully offline mode. The `package.json` description now states this (the one line visible in the plugin list / Settings), and both READMEs carry a top-of-page warning plus a new "Data flow / 数据流向" table — which operations leave the machine, the endpoints (`https://mineru.net`, `https://cdn-mineru.openxlab.org.cn`), token needs, and that no "local-only" mode exists. Addresses #6.
+
 ## [0.1.13] - 2026-09-25
 
 ### Fixed

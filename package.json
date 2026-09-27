@@ -1,7 +1,7 @@
 {
   "name": "dsh-mineru",
   "version": "0.1.13",
-  "description": "dsh-mineru: MinerU 文档解析插件 for DeepSeek Harness — 多模态全格式 (PDF/Word/PPT/Excel/HTML/图片) → 结构化 Markdown. 填 Token 走精准解析 API, 留空走 Agent 轻量解析 API.",
+  "description": "dsh-mineru: MinerU 文档解析插件 for DeepSeek Harness — 多模态全格式 (PDF/Word/PPT/Excel/HTML/图片) → 结构化 Markdown. 填 Token 走精准解析 API, 留空走 Agent 轻量解析 API. 注意: 解析需把文件上传至 MinerU 远端(内容出网), 无完全离线模式, 涉密/不得出网材料请勿使用.",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
