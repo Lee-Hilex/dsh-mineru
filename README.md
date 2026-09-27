@@ -125,8 +125,8 @@ Headless and Web share the same tool semantics; you can also type `/mineru-tools
 | Endpoints | `/api/v4/extract/task`, `/api/v4/file-urls/batch`, `/api/v4/extract/task/batch` | `/api/v1/agent/parse/url`, `/api/v1/agent/parse/file` |
 | Models | `pipeline` / `vlm` (default) / `MinerU-HTML` | fixed lightweight pipeline |
 | Size limit | ≤ 200 MB | ≤ 10 MB |
-| Page limit | ≤ 200 pages | ≤ 20 pages |
-| Batch parsing | ✅ (URLs ≤ 200/batch, local uploads ≤ 50/batch, auto-chunked) | ❌ single file only |
+| Page limit | ≤ 200 pages per request (workspace PDFs over it are split automatically) | ≤ 20 pages (never split) |
+| Batch parsing | ✅ (URLs ≤ 200/batch, local uploads ≤ 50/batch, auto-batched) | ❌ single file only |
 | Output | Zip: `full.md` + `content_list.json` + `layout.json` + images (+ optional docx/html/latex) | Markdown only |
 | Best for | Long docs, scans, formulas/tables, batch jobs, HTML | Quick reads, small files, temporary use |
 
@@ -163,7 +163,7 @@ Parses a **workspace file path** or **http(s) URL** into structured Markdown.
 | `enableTable` | | Table recognition, default `true` |
 | `enableFormula` | | Formula recognition, default `true` |
 | `isOcr` | | Force OCR for scans, default `false` |
-| `pageRanges` | | Precision page ranges, comma-separated: `"2,4-6"`; negative pages supported: `"2--2"` (2nd from last) |
+| `pageRanges` | | Precision page ranges, comma-separated: `"2,4-6"`; negative pages supported: `"2--2"` (2nd from last). Omit for the whole document; a workspace PDF over the 200-page cap is split automatically |
 | `pageRange` | | Agent page range, `from-to` or single page: `"1-10"` |
 | `extraFormats` | | Extra export formats (Precision only): `docx` / `html` / `latex` |
 | `dataId` | | Business data ID (optional, ≤ 128 chars) |
@@ -171,6 +171,16 @@ Parses a **workspace file path** or **http(s) URL** into structured Markdown.
 | `output` | | Result directory base name; defaults to the source file name |
 
 **Result highlights**: `ok`, the `api`/`modelVersion` used, `taskId`, duration, `runDir`, a truncated Markdown preview, and the artifact list (with signed preview links on Web).
+
+**Long PDFs — automatic chunking**: when one precision request would ask for more than 200 pages (a workspace PDF larger than that, or a `pageRanges` selection over 200 pages), the plugin splits it into sequential `page_ranges` chunks itself, submits and polls them one by one, and merges the outcome into the layout a single request produces. No extra parameter, and no local PDF rewrite: the file is uploaded once, only the requested range changes per request.
+
+- `full.md` — concatenated in page order, with one `<!-- chunk i/n: pages … -->` line before each chunk;
+- `content_list.json` — merged, with `page_idx` mapped back to the original document (the API renumbers it from 0 for every requested subset);
+- `images/` — the union of all chunks (names are content hashes, so they cannot collide);
+- `layout.json` / `<uuid>_model.json` — kept per chunk under `chunks/chunk-<n>/`, because they are page-indexed arrays that a merge would break;
+- `run.json` — per-chunk page range, `batchId`, state and duration; the tool result carries the same list as `chunkCount` / `chunks`.
+
+Boundaries: splitting needs the page count **locally**, so it covers workspace PDFs in precision mode only. URL sources, non-PDF formats (the host cannot read docx/pptx page counts) and the tokenless Agent API keep their previous behaviour, and their page-limit error names the reason no split happened. The Agent API is deliberately never split: it is rate-limited per caller IP, so fanning one call out into a dozen requests would exhaust the caller's quota — use Precision, or segment it yourself. `timeoutMs` applies to each chunk. Only a merged multi-chunk result renumbers pages; a single request (including one with an explicit `pageRanges`) keeps the cloud's own `page_idx`, exactly as before.
 
 ### `mineru_batch_parse` — batch parsing (Precision only)
 
@@ -306,8 +316,8 @@ The token is resolved once per operation — **a rotation applies to the very ne
 
 - **Drag-and-drop**: drop a file into the chat — it is saved to the session workspace and its **path is filled into the composer draft (never auto-sent)**; add your request and send. This bypasses the native image-attachment channel that text-only models reject;
 - **URL caveat**: MinerU fetches the URL server-side — **it cannot reach blocked sites** (github.com, AWS, etc.). Download such documents locally first and pass a path;
-- **Page ranges**: Precision uses `pageRanges` (`"2,4-6"`; `"2--2"` = 2nd from last); Agent uses `pageRange` (`"1-10"`);
-- **Long documents**: prefer Precision + `pageRanges` in chunks; the `vlm` model handles formulas and complex layouts best;
+- **Page ranges**: Precision uses `pageRanges` (`"2,4-6"`; `"2--2"` = 2nd from last); Agent uses `pageRange` (`"1-10"`). A workspace PDF that would exceed 200 pages per request is split automatically;
+- **Long documents**: in Precision mode a workspace PDF over 200 pages is split automatically — no manual `pageRanges` juggling; you can still pass `pageRanges` to parse only a part. The `vlm` model handles formulas and complex layouts best;
 - **Timeout recovery**: a timeout is not a failure — the task keeps running server-side; collect it later with `mineru_task` + `taskId`;
 - **HTML documents**: Precision only, and the `MinerU-HTML` model is forced automatically;
 - **HTML daily quota**: HTML submissions have a separate official cap (max 100/day).
@@ -341,7 +351,7 @@ Plugin behavior:
 | --- | --- | --- |
 | `A0202` / `A0211` | Token invalid / expired | Update the MinerU token in Settings |
 | `-60005` / `-30001` | File too large (200 MB / 10 MB) | Compress or split the file |
-| `-60006` / `-30003` | Too many pages (200 / 20) | Split with `pageRanges` / `pageRange` |
+| `-60006` / `-30003` | Too many pages (200 / 20) | Workspace PDFs are split automatically; for anything else the message names why no split happened — segment manually with `pageRanges` / `pageRange` |
 | `-60018` | Daily quota exhausted | Try again tomorrow; check `dailySubmitLimit` |
 | `429` | Too many requests | Retry later or lower concurrency |
 | `MINERU_TOKEN_REQUIRED` | Token-required operation without a token | Configure a token or use Agent mode |

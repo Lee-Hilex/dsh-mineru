@@ -8,7 +8,10 @@ automatically (or forced via the `mode` argument):
 
 - **precision** — official mineru.net API v4, requires a MinerU token (≤200 MB,
   ≤200 pages, batch ≤200 URLs / ≤50 upload links, Zip output with `full.md` +
-  JSON + optional docx/html/latex);
+  JSON + optional docx/html/latex). A request asking for more than 200 pages is
+  split by `page_ranges` automatically for **workspace PDFs** only (the local
+  page count must be readable); URL sources, non-PDF formats and the tokenless
+  Agent path stay single-request;
 - **agent** — token-free Agent lightweight API v1 (≤10 MB, ≤20 pages, single
   file, Markdown-only).
 
@@ -63,7 +66,10 @@ HTTP surface under `/plugin/mineru/*`.
 | `lib/index.js` | Cordis entry: `name = 'mineru'`, `inject = ['tools','skills','settings','credentials','agents']`, `Config` (Schemastery), `apply()` — resolves the live config and settings namespace, limiters, artifact store, tools/skill, HTTP surface |
 | `lib/config.js` | `CONFIG_SCHEMA` (every field marked live), `live`, `plainConfig`, `unwrapField`, `DEFAULTS`, `validateConfig`, `resolveLoadConfig`, extension/language/model constants |
 | `lib/mineru-client.js` | `MineruClient` (official v4 + agent v1, 429 retry, polling, download), `RateLimiter`, `DailyCounter`, `MineruError`, `resolveOptions`, `effectiveModelFor` |
-| `lib/tools.js` | `defineTool` definitions: `buildActivateTool`, `buildParseTool`, `buildBatchTool`, `buildTaskTool`, `buildAgentTools` |
+| `lib/tools.js` | `defineTool` definitions: `buildActivateTool`, `buildParseTool`, `buildBatchTool`, `buildTaskTool`, `buildAgentTools`; `mineru_parse` splits an over-limit precision request (`planChunking` + `runChunkedParse`) and merges the chunks |
+| `lib/page-ranges.js` | Pure `page_ranges` parsing, negative-index resolution and per-request split planning |
+| `lib/pdf-pages.js` | Pure best-effort local PDF page count (page-tree `/Count`, `/Type /Page` leaves, deflate object streams); reports `pages: null` rather than guessing |
+| `lib/chunk-merge.js` | Pure merge helpers: subset `page_idx` back to the original page, `full.md` stitching with a provenance line per chunk |
 | `lib/skill.js` | `mineru-tools` skill content (model-facing usage guide, limits, error-code table) |
 | `lib/artifacts.js` | Per-run artifact dirs under `<workspace>/.dsh-mineru/artifacts/`, metadata, HMAC-signed preview URLs, file-name/run-name sanitization |
 | `lib/zip.js` | Dependency-free ZIP reader (STORED/DEFLATE, traversal-safe, byte caps) for MinerU result archives |
@@ -76,7 +82,7 @@ HTTP surface under `/plugin/mineru/*`.
 ```sh
 node --check lib/*.js     # syntax gate for every lib change
 npm test                  # vitest run (npm install first)
-npm pack --dry-run        # preview the shipped tarball (19 files expected)
+npm pack --dry-run        # preview the shipped tarball (22 files expected)
 ```
 
 Release flow: RELEASE.md (version bump → CHANGELOG + bilingual README sync →
