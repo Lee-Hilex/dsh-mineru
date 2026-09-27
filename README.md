@@ -11,6 +11,8 @@ English | [简体中文](README.zh.md)
 
 **dsh-mineru** is a **MinerU-powered multimodal document parsing plugin** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh): turn PDF, Word, PPT, Excel, HTML, and images into **structured Markdown**. Configure a MinerU token to use the 🎯 Precision API, or leave it blank and use the ⚡ Agent API (tokenless, IP rate-limited).
 
+> ⚠️ **Data leaves this machine**: every parse uploads your file to MinerU's remote service — there is **no fully offline mode**. Do not use it for confidential / case material that must stay on-premises. See [Security model](#security-model).
+
 ## Contents
 
 - [Overview](#overview) · [Quick start](#quick-start) · [Two API modes](#two-api-modes) · [Tools](#tools) · [Results & artifacts](#results--artifacts) · [Configuration](#configuration) · [Usage tips](#usage-tips) · [Web UI](#web-ui) · [Rate limits & reliability](#rate-limits--reliability) · [Error code reference](#error-code-reference) · [Security model](#security-model) · [FAQ](#faq) · [Development & publishing](#development--publishing) · [Contributing](#contributing) · [License](#license)
@@ -534,6 +536,18 @@ Plugin behavior:
 Every error is mapped to an **actionable message** instead of a raw code.
 
 ## Security model
+
+### Data flow (where your content goes)
+
+**This plugin is not offline.** Both API modes send the full source file to a remote MinerU service, then download the parsed result — nothing is parsed on this machine.
+
+| Operation | Leaves the machine? | Endpoint | Token |
+| --- | --- | --- | --- |
+| Precision parse / batch / task collect | Yes — file uploaded, result zip downloaded | `https://mineru.net` (result CDN: `https://cdn-mineru.openxlab.org.cn`) | Required |
+| Agent lightweight parse | Yes — file uploaded, Markdown downloaded | MinerU Agent API | None (IP rate-limited) |
+| Activation / settings / local preview | No file content leaves (only the token test makes one authenticated API call) | — | — |
+
+There is **no "local-only" mode**: MinerU runs server-side. For material that cannot leave the machine, use a fully local toolchain (local PDF conversion + offline OCR + local template rendering).
 
 - **Path isolation**: input paths resolve against the session workspace; files outside it cannot be read;
 - **ZIP unpacking guards**: rejects absolute paths, `..` traversal, encrypted entries, and ZIP64, with entry-count and byte caps, and verifies CRC32 on every extracted entry;
