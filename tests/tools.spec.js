@@ -61,4 +61,14 @@ describe('tool registry shape', () => {
     expect(parseTool.parameters.source.type).toBe('string');
     expect(parseTool.parameters.source.required).toBe(true);
   });
+
+  it('declares an optional segments array on the parsing tools', () => {
+    for (const tool of buildAgentTools(makeState())) {
+      if (tool.name === 'mineru_task') continue;
+      expect(tool.parameters.segments.type).toBe('array');
+      expect(tool.parameters.segments.required).toBeUndefined();
+      expect(tool.parameters.segments.items.properties.from.required).toBe(true);
+      expect(tool.parameters.segments.items.properties.label.type).toBe('string');
+    }
+  });
 });

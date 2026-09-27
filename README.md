@@ -48,6 +48,7 @@ Typical use cases:
 - **Drag-and-drop uploads** — drop a file into the chat; its path lands in the composer draft so text-only models can process documents;
 - **Auto-chunked batch parsing** — submit hundreds of files/URLs at once; batching respects official limits automatically;
 - **Rate-limit aware** — built-in token buckets, daily caps, 429 backoff, and actionable messages for every error code;
+- **Printed page labels** — declare Roman front matter or offprint page systems with `segments`, get a `page-map.json`, and cross-check it page by page against the printed numbers the cloud read;
 - **Artifact-backed results** — parsed output lands in the workspace as files with signed preview links in the Web UI.
 
 ## Quick start
@@ -170,8 +171,9 @@ Parses a **workspace file path** or **http(s) URL** into structured Markdown.
 | `timeoutMs` | | Whole-operation timeout incl. polling; defaults to plugin config (10 min) |
 | `output` | | Result directory base name; defaults to the source file name |
 | `anchor` | | Also write `document.md`, a page-anchored copy of the result (one `<!-- pN bK -->` per block); default `false` — see [Page-anchored Markdown](#page-anchored-markdown-anchor) |
+| `segments` | | Declare the physical-page → printed-page systems (Roman front matter, an offprint keeping its journal numbers, …), e.g. `[{"from":1,"to":6,"label":"i"},{"from":7,"to":106,"start":1}]`; a declaration writes `page-map.json` independently of `anchor` — see [Printed page labels and page-map.json](#printed-page-labels-and-page-mapjson) |
 
-**Result highlights**: `ok`, the `api`/`modelVersion` used, `taskId`, duration, `runDir`, a truncated Markdown preview, the artifact list (with signed preview links on Web), and — with `anchor: true` — an `anchor` summary naming the `document.md` that was written.
+**Result highlights**: `ok`, the `api`/`modelVersion` used, `taskId`, duration, `runDir`, a truncated Markdown preview, the artifact list (with signed preview links on Web), an `anchor` summary naming the `document.md` that was written with `anchor: true`, and a `pageMap` summary naming the `page-map.json` written with `segments`.
 
 ### Page-anchored Markdown (`anchor`)
 
@@ -229,6 +231,11 @@ page. Nothing is reported when the two agree (every offset `0`) or when no
 printed number could be read. The check only reads the blocks: the anchors are
 never changed by it.
 
+That warning is about printed numbers disagreeing with the physical order, and
+`segments` is how you declare the relationship instead: with a declaration the
+offset heuristic is replaced by a per-page comparison — see
+[Printed page labels and page-map.json](#printed-page-labels-and-page-mapjson).
+
 Without `pageRanges` the pages are numbered from 1 in request order. With a
 negative range (`"2--2"`) the cloud does not tell us the document length, so the
 anchors fall back to the first page you asked for and the result carries a
@@ -244,6 +251,102 @@ warning telling you to check them.
 
 Boundaries: splitting needs the page count **locally**, so it covers workspace PDFs in precision mode only. URL sources, non-PDF formats (the host cannot read docx/pptx page counts) and the tokenless Agent API keep their previous behaviour, and their page-limit error names the reason no split happened. The Agent API is deliberately never split: it is rate-limited per caller IP, so fanning one call out into a dozen requests would exhaust the caller's quota — use Precision, or segment it yourself. `timeoutMs` applies to each chunk. Only a merged multi-chunk result renumbers pages; a single request (including one with an explicit `pageRanges`) keeps the cloud's own `page_idx`, exactly as before.
 
+### Printed page labels and page-map.json
+
+The anchors use the **physical page order**, while the page carries a **printed**
+page number, and the two need not agree: front matter and tables of contents are
+often numbered with Roman numerals (i, ii, iii) while the body restarts at 1; a
+journal offprint keeps the page numbers of the issue it was cut from, so physical
+page 1 prints "105"; a bound volume of several articles has one page system per
+article. `segments` declares both coordinate systems:
+
+```json
+{ "segments": [
+  { "from": 1,   "to": 6,   "label": "i"  },
+  { "from": 7,   "to": 106, "start": 1    },
+  { "from": 107, "to": 132, "start": 105  }
+] }
+```
+
+- ranges are **1-based physical pages** (both ends included) and must be
+  **ascending, non-overlapping**, `from <= to`, at least one segment; a malformed
+  declaration fails the call before anything is uploaded;
+- `label` is the printed label of the segment's first page, carried on in **its
+  own style** — Roman `i` → i, ii, iii… (a label declared in uppercase renders
+  uppercase), Arabic `1` → 1, 2, 3…;
+- `start` is the **Arabic** first number of the segment, incremented page by page
+  (the third segment above is "physical 107 = printed 105");
+- width is not preserved: `label: "007"` declares the value 7 and renders `7`,
+  `8`, … (same for `start`); exactly one of `label` / `start` may be given.
+
+Whenever `segments` is passed, the run directory also gets a `page-map.json`
+(**independent of `anchor`** — no `anchor` needed):
+
+```json
+{
+  "version": 1,
+  "segments": [ { "from": 1, "to": 6, "label": "i" }, … ],
+  "pages": [ { "page": 1, "label": "i", "segment": 1 }, … ],
+  "pageRange": { "first": 1, "last": 132 },
+  "uncoveredPages": [],
+  "outOfRangePages": [],
+  "warnings": []
+}
+```
+
+- `pages` has one entry per declared physical page, with its printed label and the
+  segment it came from (`segment` is 1-based);
+- `pageRange` is the physical page range this run actually produced (`null` when
+  it cannot be determined);
+- `uncoveredPages` are pages this run parsed that no declared range covers: they
+  get no `> 印刷页码` line in `document.md`, and the result carries one warning
+  line naming them;
+- `outOfRangePages` are pages the declaration covers that this run does not
+  contain. Only a **whole-document** parse (no `pageRanges`) reports a declared
+  page outside `pageRange` as missing from the document; parsing a subset never
+  raises that warning;
+- a declaration reaching past the parsed range, or leaving pages unmapped, is
+  never an error — only a warning.
+
+**Cross-check against the cloud**: when the result carries readable
+`page_number` blocks, the plugin compares each page's printed number with the
+declaration (Roman and Arabic are compared **by value**, so a declared `ii` and a
+detected `2` agree):
+
+- they agree → nothing is reported;
+- they disagree → one line in `pageMap.warnings` naming the exact pages, so the
+  declaration can be fixed:
+
+```
+pageMap.warnings = ["segments 声明与云端识别到的印刷页码不一致：第 107 页声明为 105，云端识别为 104（共 1 页不一致），请核对声明"]
+```
+
+- no printed number was read at all → nothing is reported.
+
+A declaration also silences the old offset-based warnings (`+3`, several
+offsets): once the page systems are declared, a constant offset is the expected
+outcome.
+
+**Together with `anchor: true`**, every page of `document.md` gains one
+`> 印刷页码：<label>` line above its first block (no line when the page has no
+mapped label):
+
+```
+> 印刷页码：105
+
+<!-- p107 b1 -->
+君子务本，本立而道生。
+```
+
+**The anchors themselves do not change**: they stay the physical-order
+`<!-- pN bK -->` (`p107` is physical page 107) next to a separate label line —
+removing those lines from `document.md` gives byte for byte the file you get
+without `segments`.
+
+After automatic chunking the merged `content_list.json` uses the **absolute page
+order of the original document**, so a declaration is always expressed in
+physical pages and maps identically on both paths.
+
 ### `mineru_batch_parse` — batch parsing (Precision only)
 
 Parses many documents in one call; **local paths and URLs can be mixed**, submissions are auto-chunked within official limits, and per-item success/failure is reported.
@@ -254,6 +357,7 @@ Parses many documents in one call; **local paths and URLs can be mixed**, submis
 | `outputPrefix` | | Result directory base name, default `batch` |
 | `dataIdPrefix` | | Business data ID prefix; a sequence number is appended per item (optional) |
 | `anchor` | | Same as `mineru_parse`: write a `document.md` per document (default `false`) |
+| `segments` | | Same as `mineru_parse`: write a `page-map.json` per document (default: none); the declaration applies to each document in its own physical page order |
 | others | | Same shared options as `mineru_parse` (except `mode` — this tool is Precision-only) |
 
 **Chunking rules**: local files ≤ 50 per batch, URLs ≤ 200 per batch, ≤ 1000 total per call; exceeding these errors with a hint to split the call.
@@ -272,6 +376,7 @@ Parses many documents in one call; **local paths and URLs can be mixed**, submis
 | `collect` | | Download the result into an Artifact when done, default `true` |
 | `output` | | Result directory base name, default `task` |
 | `anchor` | | Also write `document.md` when collecting (default `false`) |
+| `segments` | | Also write a `page-map.json` from the declared page systems when collecting (default: none) |
 | `timeoutMs` | | Timeout for `wait` mode |
 
 **Typical scenario**: `mineru_parse` timed out on a large PDF → tell the agent "collect the result for taskId=xxx with mineru_task".
@@ -289,6 +394,7 @@ All results land in **`<workspace>/.dsh-mineru/artifacts/<run>/`** (`<workspace>
 ├── full.md                  # Structured Markdown (both modes)
 ├── run.json                 # Run metadata (source, API, model, duration, …)
 ├── document.md              # Page-anchored Markdown (Precision + anchor: true only)
+├── page-map.json            # Physical page → printed label map (written with segments, independent of anchor)
 ├── *_content_list.json      # Structured content list (Precision only)
 ├── layout.json              # Layout data (Precision only)
 ├── *_model.json             # Raw model output (Precision only)
@@ -298,7 +404,7 @@ All results land in **`<workspace>/.dsh-mineru/artifacts/<run>/`** (`<workspace>
 ```
 
 - Tool results carry a **bounded Markdown preview** (first 12 KB by default); read the full text from `full.md` with the `read` tool;
-- `document.md` is **opt-in** (`anchor: true`) and purely additional: `full.md`, `content_list.json` and `layout.json` keep exactly the shape they have today, so nothing changes for users who do not pass `anchor`;
+- `document.md` and `page-map.json` are both **opt-in additions** — the former with `anchor: true`, the latter with `segments` (the two are independent) — and purely additional: `full.md`, `content_list.json` and `layout.json` keep exactly the shape they have today, so nothing changes for users who pass neither;
 - **Web UI**: artifacts get HMAC-signed preview URLs (24 h lifetime by default) — click to view/download; tool-result cards open files directly;
 - **Headless**: use the absolute paths returned by the tool.
 
@@ -384,6 +490,7 @@ The token is resolved once per operation — **a rotation applies to the very ne
 - **URL caveat**: MinerU fetches the URL server-side — **it cannot reach blocked sites** (github.com, AWS, etc.). Download such documents locally first and pass a path;
 - **Page ranges**: Precision uses `pageRanges` (`"2,4-6"`; `"2--2"` = 2nd from last); Agent uses `pageRange` (`"1-10"`). A workspace PDF that would exceed 200 pages per request is split automatically;
 - **Long documents**: in Precision mode a workspace PDF over 200 pages is split automatically — no manual `pageRanges` juggling; you can still pass `pageRanges` to parse only a part. The `vlm` model handles formulas and complex layouts best;
+- **Printed page numbers**: anchors are the physical order; Roman front matter or an offprint keeping its journal numbers needs a `segments` declaration, which also writes `page-map.json` and cross-checks the cloud's `page_number` blocks page by page;
 - **Timeout recovery**: a timeout is not a failure — the task keeps running server-side; collect it later with `mineru_task` + `taskId`;
 - **HTML documents**: Precision only, and the `MinerU-HTML` model is forced automatically;
 - **HTML daily quota**: HTML submissions have a separate official cap (max 100/day).

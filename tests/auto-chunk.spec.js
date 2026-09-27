@@ -198,6 +198,42 @@ describe('mineru_parse auto-chunking', () => {
     expect(result.artifacts.map((artifact) => artifact.name).sort()).toEqual(['content_list.json', 'full.md', 'run.json']);
   });
 
+  it('maps declared printed labels onto the merged absolute page order', async () => {
+    const { cwd } = await makeWorkspace('long.pdf', fakePdf(201));
+    const client = makeFakeClient();
+    const tool = buildParseTool(makeState(client));
+
+    const result = await tool.execute({
+      source: 'long.pdf',
+      anchor: true,
+      // Roman front matter, then an Arabic body from physical page 7.
+      segments: [{ from: 1, to: 6, label: 'i' }, { from: 7, to: 201, start: 1 }],
+    }, makeExec(cwd));
+
+    expect(result.chunkCount).toBe(2);
+    // The merged content list is absolute, so the labels are looked up with the
+    // same physical page the anchors use — never with the chunk-local page_idx.
+    const mergedList = JSON.parse(await readFile(join(result.runDir, 'content_list.json'), 'utf8'));
+    expect(mergedList[0].page_idx).toBe(0);
+    expect(mergedList[200].page_idx).toBe(200);
+
+    const document = await readFile(join(result.runDir, 'document.md'), 'utf8');
+    expect(document).toContain('> 印刷页码：i\n\n<!-- p1 b1 -->');
+    expect(document).toContain('> 印刷页码：1\n\n<!-- p7 b1 -->');
+    expect(document).toContain('> 印刷页码：195\n\n<!-- p201 b1 -->');
+
+    const map = JSON.parse(await readFile(join(result.runDir, 'page-map.json'), 'utf8'));
+    expect(map.pages).toHaveLength(201);
+    expect(map.pages[200]).toEqual({ page: 201, label: '195', segment: 2 });
+    expect(map.pageRange).toEqual({ first: 1, last: 201 });
+    expect(map.uncoveredPages).toEqual([]);
+    expect(map.outOfRangePages).toEqual([]);
+    expect(map.warnings).toEqual([]);
+    expect(result.artifacts.map((artifact) => artifact.name)).toEqual(
+      expect.arrayContaining(['document.md', 'page-map.json']),
+    );
+  });
+
   it('keeps one request when the page count is within the cap, leaving cloud page indexes alone', async () => {
     const { cwd } = await makeWorkspace('short.pdf', fakePdf(10));
     const client = makeFakeClient();

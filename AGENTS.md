@@ -73,7 +73,8 @@ HTTP surface under `/plugin/mineru/*`.
 | `lib/skill.js` | `mineru-tools` skill content (model-facing usage guide, limits, error-code table) |
 | `lib/artifacts.js` | Per-run artifact dirs under `<workspace>/.dsh-mineru/artifacts/`, metadata, HMAC-signed preview URLs, file-name/run-name sanitization |
 | `lib/zip.js` | Dependency-free ZIP reader (STORED/DEFLATE, traversal-safe, byte caps) for MinerU result archives |
-| `lib/anchors.js` | Pure page-anchored Markdown: maps a request-relative `page_idx` back to the original page (through the requested page list, so discrete `pageRanges` stay correct) and renders `content_list.json` into the opt-in `document.md`; also parses `pageRanges` specs |
+| `lib/anchors.js` | Pure page-anchored Markdown: maps a request-relative `page_idx` back to the original page (through the requested page list, so discrete `pageRanges` stay correct) and renders `content_list.json` into the opt-in `document.md`; also parses `pageRanges` specs and renders the declared printed label of a page |
+| `lib/page-labels.js` | Pure printed page labels: validates a `segments` declaration (1-based physical ranges, ascending, non-overlapping), expands it into one Roman/Arabic label per page, reports uncovered and out-of-range pages, and compares the declaration with the `page_number` self-check |
 | `lib/http.js` | Web host surface: `/plugin/mineru/config`, `/credential`, `/test-token`, `/test-agent`, `/upload`, `/artifacts/*` |
 | `lib/client.js` | Browser bundle: settings tab (`settings.plugins.tab`), tool-result cards (`tool.call.toolview`), drag-drop/paste bridge, zh/en dictionaries |
 | `tests/*.spec.js` | Vitest unit tests (mocked fetch / mocked `@deepseek-ai/*` imports, no live server) |
@@ -83,7 +84,7 @@ HTTP surface under `/plugin/mineru/*`.
 ```sh
 node --check lib/*.js     # syntax gate for every lib change
 npm test                  # vitest run (npm install first)
-npm pack --dry-run        # preview the shipped tarball (23 files expected)
+npm pack --dry-run        # preview the shipped tarball (24 files expected)
 ```
 
 Release flow: RELEASE.md (version bump → CHANGELOG + bilingual README sync →
