@@ -4,7 +4,17 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- No changes yet (latest release is 0.1.13).
+### Added
+
+- Automatic chunking for oversized precision requests: when one request would ask for more than 200 pages (a workspace PDF larger than that, or a `pageRanges` selection over 200 pages), `mineru_parse` splits it into sequential `page_ranges` chunks, submits and polls them one by one, and merges the outcome into the layout a single request produces — no new parameter, and no local PDF rewrite (the file is uploaded once, only the requested range changes per request). `full.md` is concatenated with one provenance line per chunk, `content_list.json` is merged with `page_idx` mapped back to the original document (the API renumbers it from 0 for every requested subset), `images/` is the union of all chunks, and `layout.json` / `<uuid>_model.json` stay per chunk under `chunks/chunk-<n>/` because they are page-indexed arrays. `run.json` and the tool result's new `chunkCount` / `chunks` fields report each chunk's page range, `batchId`, state and duration; a failed chunk reports its page range in the error.
+- `lib/page-ranges.js` (split planning, negative-index resolution), `lib/chunk-merge.js` (subset-index remapping, `full.md` stitching) and `lib/pdf-pages.js` (local page-tree count: `/Type /Pages` `/Count`, `/Type /Page` leaves, deflate object streams) — pure modules, with vitest coverage and a fake-client test of the whole split-and-merge path.
+
+### Changed
+
+- The tokenless Agent API is never split automatically: it is rate-limited per caller IP, so one call fanned out into a dozen requests would exhaust the caller's quota. Its `-30003` message now says so and points at Precision (where PDFs do split) or a manual `pageRange`.
+- URL sources and formats whose page count cannot be read locally (docx/pptx/…) keep the single-request behaviour, and their `-60006` failure now names the reason no split happened. A single request — including one with an explicit `pageRanges` — keeps the cloud's own `page_idx`, exactly as before.
+- A precision upload that settles as `failed` now raises the server's own reason (mapped `err_code`, else `err_msg`) as `MINERU_PARSE_FAILED`, the way `waitTask` already did, instead of the collector reporting a bare `state=failed`.
+- Docs: bilingual README (page limits, `pageRanges`, long-PDF section, error table), the bundled `mineru-tools` skill content, and the AGENTS.md file map.
 
 ## [0.1.13] - 2026-09-25
 
