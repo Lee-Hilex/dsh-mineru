@@ -133,4 +133,12 @@ describe('mineru_parse anchor option', () => {
     const blocks = tool.output.render({}, result);
     expect(blocks[0].text).toContain('document.md');
   });
+
+  it('reports the printed-page self-check in the anchor summary', async () => {
+    const { cwd, state } = await makeHarness();
+    const tool = buildParseTool(state);
+    const result = await tool.execute({ source: 'doc.pdf', anchor: true }, execFor(cwd));
+    // this fixture carries no page_number block, so nothing was detected
+    expect(result.anchor.pageNumbers).toEqual({ detected: 0, total: 2, offsets: [] });
+  });
 });

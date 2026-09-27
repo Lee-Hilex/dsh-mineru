@@ -13,7 +13,9 @@ import {
   classifyBlockType,
   extractText,
   isUnreadableText,
+  parsePrintedPageNumber,
   parseRequestedPages,
+  parseRomanNumeral,
   synthesizeDocument,
 } from '../lib/anchors.js';
 
@@ -33,6 +35,25 @@ const CONTENT_LIST = [
   },
   { type: 'image', img_path: 'images/abc123.jpg', bbox: [100, 300, 400, 500], page_idx: 1 },
 ];
+
+/** Two body blocks and nothing else: no printed page number to read anywhere. */
+const NO_PRINTED_NUMBERS = [
+  { type: 'text', text: '君子务本，本立而道生。', page_idx: 0 },
+  { type: 'text', text: '有子曰：其为人也孝弟。', page_idx: 1 },
+];
+
+/** One text block plus one `page_number` block per page, in content-list order. */
+function withPrintedNumbers(printed) {
+  return printed.flatMap((text, index) => [
+    { type: 'text', text: '第' + (index + 1) + '页正文', page_idx: index },
+    { type: 'page_number', text, bbox: [521, 938, 547, 952], page_idx: index },
+  ]);
+}
+
+/** The `<!-- pN bK -->` lines of a rendered document, in order. */
+function anchorLines(markdown) {
+  return [...markdown.matchAll(/<!-- p[^ ]+ b\d+ -->/g)].map((match) => match[0]);
+}
 
 describe('block classification and text extraction', () => {
   it('separates body, auxiliary and unknown block types', () => {
@@ -92,6 +113,137 @@ describe('page anchors', () => {
     const { markdown } = synthesizeDocument(CONTENT_LIST);
     const order = [...markdown.matchAll(/<!-- p(\d+) b(\d+) -->/g)].map((match) => match[2]);
     expect(order).toEqual(['2', '4', '1', '2']);
+  });
+});
+
+describe('printed page numbers vs the physical page order', () => {
+  it('detects nothing and stays quiet when there is no page_number block', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(NO_PRINTED_NUMBERS);
+    expect(pageNumbers).toEqual({ detected: 0, total: 2, offsets: [] });
+    expect(warnings).toEqual([]);
+  });
+
+  it('stays quiet when the printed numbers match the physical order', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(withPrintedNumbers(['1', '2', '3']));
+    expect(pageNumbers).toEqual({ detected: 3, total: 3, offsets: [0] });
+    expect(warnings).toEqual([]);
+  });
+
+  it('reports one constant offset, with its sign, when every printed number is +3', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(withPrintedNumbers(['4', '5', '6']));
+    expect(pageNumbers).toEqual({ detected: 3, total: 3, offsets: [3] });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('+3');
+    expect(warnings[0]).toContain('物理页序');
+    expect(warnings[0]).not.toContain('多套偏移');
+  });
+
+  it('reports several offsets as a set instead of collapsing them', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(withPrintedNumbers(['4', '5', '8']));
+    expect(pageNumbers.offsets).toEqual([3, 5]);
+    expect(pageNumbers.detected).toBe(3);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('多套偏移');
+    expect(warnings[0]).toContain('+3');
+    expect(warnings[0]).toContain('+5');
+    expect(warnings[0]).toContain('物理页序');
+  });
+
+  it('skips empty, unreadable and unparseable candidates and keeps the first readable one', () => {
+    const { pageNumbers, warnings } = synthesizeDocument([
+      { type: 'text', text: '封面', page_idx: 0 },
+      { type: 'page_number', text: '', page_idx: 0 },
+      { type: 'page_number', text: UNREADABLE_MARKER, page_idx: 0 },
+      { type: 'page_number', text: '第 3 页', page_idx: 0 },
+      { type: 'text', text: '正文', page_idx: 1 },
+      { type: 'page_number', text: UNREADABLE_MARKER, page_idx: 1 },
+      { type: 'page_number', text: '5', page_idx: 1 },
+      { type: 'page_number', text: '7', page_idx: 1 },
+      { type: 'text', text: '附记', page_idx: 2 },
+    ]);
+    // Page 1 offered nothing readable and page 3 has no page_number block at
+    // all, so only page 2 is detected — and its second candidate ('7') is not
+    // the one the check uses.
+    expect(pageNumbers).toEqual({ detected: 1, total: 3, offsets: [3] });
+    // the unreadable candidates raise their own warning; the offset warning is
+    // the only one that talks about the page order
+    const offsetWarnings = warnings.filter((warning) => warning.includes('物理页序'));
+    expect(offsetWarnings).toHaveLength(1);
+    expect(offsetWarnings[0]).toContain('+3');
+  });
+
+  it('compares against the mapped physical page, not the request-relative page_idx', () => {
+    // "2,4-6": page_idx 0..3 are physical pages 2/4/5/6, so printing 5/7/8/9 is
+    // a constant +3. Reading page_idx + 1 instead would yield 4/5/5/5.
+    const { pageNumbers, stats } = synthesizeDocument(
+      withPrintedNumbers(['5', '7', '8', '9']),
+      { pageRanges: '2,4-6' },
+    );
+    expect(stats.pageNumbers).toEqual([2, 4, 5, 6]);
+    expect(pageNumbers).toEqual({ detected: 4, total: 4, offsets: [3] });
+  });
+
+  it('leaves the anchors themselves untouched by the self-check', () => {
+    const readable = withPrintedNumbers(['4', '5', '6', '7']);
+    const unreadable = readable.map((block) => (
+      block.type === 'page_number' ? { ...block, text: UNREADABLE_MARKER } : block
+    ));
+    const checked = synthesizeDocument(readable);
+    const silent = synthesizeDocument(unreadable);
+
+    expect(silent.pageNumbers.detected).toBe(0);
+    expect(checked.pageNumbers.detected).toBe(4);
+    expect(checked.warnings.join('')).toContain('+3');
+
+    // Anchors are a pure function of the page mapping and the block order: the
+    // same bytes whether or not the self-check found anything, and the same
+    // `<!-- pN bK -->` lines this fixture rendered before the check existed.
+    expect(checked.markdown).toBe(silent.markdown);
+    expect(anchorLines(checked.markdown)).toEqual(anchorLines(silent.markdown));
+    expect(anchorLines(checked.markdown)).toEqual([
+      '<!-- p1 b1 -->',
+      '<!-- p2 b1 -->',
+      '<!-- p3 b1 -->',
+      '<!-- p4 b1 -->',
+    ]);
+  });
+});
+
+describe('parseRomanNumeral', () => {
+  it('reads the Roman numerals front matter is printed with', () => {
+    expect(parseRomanNumeral('iv')).toBe(4);
+    expect(parseRomanNumeral('IX')).toBe(9);
+    expect(parseRomanNumeral('i')).toBe(1);
+    expect(parseRomanNumeral('xii')).toBe(12);
+    expect(parseRomanNumeral('MMXXIV')).toBe(2024);
+    expect(parseRomanNumeral('  vi  ')).toBe(6);
+  });
+
+  it('rejects anything that is not a Roman numeral', () => {
+    expect(parseRomanNumeral('abc')).toBeNull();
+    expect(parseRomanNumeral('4')).toBeNull();
+    expect(parseRomanNumeral('')).toBeNull();
+    expect(parseRomanNumeral(null)).toBeNull();
+    expect(parseRomanNumeral(7)).toBeNull();
+    expect(parseRomanNumeral('第 3 页')).toBeNull();
+  });
+
+  it('lets Roman front matter match the physical order without a warning', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(withPrintedNumbers(['i', 'ii', 'iii']));
+    expect(pageNumbers).toEqual({ detected: 3, total: 3, offsets: [0] });
+    expect(warnings).toEqual([]);
+  });
+});
+
+describe('parsePrintedPageNumber', () => {
+  it('accepts Arabic digits and Roman numerals, and nothing else', () => {
+    expect(parsePrintedPageNumber('12')).toBe(12);
+    expect(parsePrintedPageNumber(' iv ')).toBe(4);
+    expect(parsePrintedPageNumber('0')).toBeNull();
+    expect(parsePrintedPageNumber('')).toBeNull();
+    expect(parsePrintedPageNumber(UNREADABLE_MARKER)).toBeNull();
+    expect(parsePrintedPageNumber('1 / 200')).toBeNull();
+    expect(parsePrintedPageNumber('第 3 页')).toBeNull();
   });
 });
 

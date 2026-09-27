@@ -191,9 +191,10 @@ claim drawn from a scan cannot be cited back to a page. `anchor: true` adds a
 <table><tr><td>姓名</td><td>字</td><td>生年</td></tr>…</table>
 ```
 
-- `pN` is the page in the **original document** (1-based). The cloud renumbers
-  the pages you asked for, so with `pageRanges: "2,4-6"` the anchors are
-  `p2, p4, p5, p6` — the mapping is `requestedPages[page_idx]`, not a fixed
+- `pN` is the **physical page position in this file** (1-based, cover and front
+  matter included) — not the page number printed on the page. The cloud
+  renumbers the pages you asked for, so with `pageRanges: "2,4-6"` the anchors
+  are `p2, p4, p5, p6` — the mapping is `requestedPages[page_idx]`, not a fixed
   offset;
 - `bK` is the K-th block **of that page** in `content_list.json` order. Page
   headers, footers and page numbers stay out of the body but still occupy their
@@ -207,6 +208,26 @@ claim drawn from a scan cannot be cited back to a page. `anchor: true` adds a
 - the precision API is the only mode that returns `content_list.json`, so
   `anchor: true` under the Agent API returns a warning and no `document.md`
   instead of failing.
+
+The number printed on a page is a *printed* page number, and it need not match
+the physical order: front matter numbered with Roman numerals, or a document
+that keeps the page numbers of the journal it came from, shifts every later
+page. When the result carries readable `page_number` blocks the renderer
+compares them with the physical order on a best-effort basis, records each
+page's `printed − physical` difference in the `pageNumbers` field of the
+`anchor` summary (`{ detected, total, offsets }`, `offsets` sorted and
+de-duplicated), and reports a single constant non-zero difference as one
+warning line (messages are Chinese, like the rest of the renderer's warnings):
+
+```
+anchor.pageNumbers = { "detected": 4, "total": 4, "offsets": [3] }
+anchor.warnings    = ["印刷页码与物理页序整体相差 +3（前言用罗马数字，或用析出文献保留原刊页码，都会造成整体偏移）；锚点仍用物理页序，可用页码映射声明两者的对应关系"]
+```
+
+Several different differences are reported as such and need checking page by
+page. Nothing is reported when the two agree (every offset `0`) or when no
+printed number could be read. The check only reads the blocks: the anchors are
+never changed by it.
 
 Without `pageRanges` the pages are numbered from 1 in request order. With a
 negative range (`"2--2"`) the cloud does not tell us the document length, so the
