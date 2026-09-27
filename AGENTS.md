@@ -74,7 +74,8 @@ HTTP surface under `/plugin/mineru/*`.
 | `lib/skill.js` | `mineru-tools` skill content (model-facing usage guide, limits, error-code table) |
 | `lib/artifacts.js` | Per-run artifact dirs under `<workspace>/.dsh-mineru/artifacts/`, metadata, HMAC-signed preview URLs, file-name/run-name sanitization |
 | `lib/zip.js` | Dependency-free ZIP reader (STORED/DEFLATE, traversal-safe, byte caps) for MinerU result archives |
-| `lib/anchors.js` | Pure page-anchored Markdown: maps a request-relative `page_idx` back to the original page (through the requested page list, so discrete `pageRanges` stay correct) and renders `content_list.json` into the opt-in `document.md`; also parses `pageRanges` specs |
+| `lib/anchors.js` | Pure page-anchored Markdown: maps a request-relative `page_idx` back to the original page (through the requested page list, so discrete `pageRanges` stay correct) and renders `content_list.json` into the opt-in `document.md`; also parses `pageRanges` specs and renders the declared printed label of a page |
+| `lib/page-labels.js` | Pure printed page labels: validates a `segments` declaration (1-based physical ranges, ascending, non-overlapping), expands it into one Roman/Arabic label per page, reports uncovered and out-of-range pages, and compares the declaration with the `page_number` self-check |
 | `lib/http.js` | Web host surface: `/plugin/mineru/config`, `/credential`, `/test-token`, `/test-agent`, `/upload`, `/artifacts/*` |
 | `lib/client.js` | Browser bundle: settings tab (`settings.plugins.tab`), tool-result cards (`tool.call.toolview`), drag-drop/paste bridge, zh/en dictionaries |
 | `tests/*.spec.js` | Vitest specs (mocked `@deepseek-ai/*` imports, no live server); most mock the high-level client, while `zero-quota-e2e.spec.js` runs the real client + orchestration against the fetch-level fake cloud |

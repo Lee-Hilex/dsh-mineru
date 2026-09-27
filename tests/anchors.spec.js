@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   BODY_TYPES,
+  PRINTED_LABEL_PREFIX,
   UNREADABLE_MARKER,
   classifyBlockType,
   extractText,
@@ -420,5 +421,105 @@ describe('output contract', () => {
     const { markdown } = synthesizeDocument([{ type: 'text', text: 'a', page_idx: 0 }]);
     expect(markdown.endsWith('\n')).toBe(true);
     expect(markdown.endsWith('\n\n')).toBe(false);
+  });
+});
+
+describe('declared printed page labels (pageLabels)', () => {
+  /** Page 1 -> `i`, page 2 -> `ii`: the shape `page-map.json` carries. */
+  const LABELS = [
+    { page: 1, label: 'i' },
+    { page: 2, label: 'ii' },
+  ];
+
+  /** Every `> 印刷页码：…` line of a rendered document. */
+  function labelLines(markdown) {
+    return markdown.split('\n').filter((line) => line.startsWith(PRINTED_LABEL_PREFIX));
+  }
+
+  it('adds one label line above the first block of each mapped page', () => {
+    const { markdown } = synthesizeDocument(CONTENT_LIST, { pageLabels: LABELS });
+    expect(markdown).toContain(PRINTED_LABEL_PREFIX + 'i\n\n<!-- p1 b2 -->');
+    expect(markdown).toContain(PRINTED_LABEL_PREFIX + 'ii\n\n<!-- p2 b1 -->');
+    expect(labelLines(markdown)).toEqual([PRINTED_LABEL_PREFIX + 'i', PRINTED_LABEL_PREFIX + 'ii']);
+  });
+
+  it('leaves the anchors byte for byte untouched', () => {
+    const plain = synthesizeDocument(CONTENT_LIST);
+    const labelled = synthesizeDocument(CONTENT_LIST, { pageLabels: LABELS });
+    // Removing exactly the label chunk and its separator must give the document
+    // this fixture rendered before page labels existed.
+    const stripped = labelled.markdown.replace(new RegExp('^' + PRINTED_LABEL_PREFIX + '[^\\n]*\\n\\n', 'gm'), '');
+    expect(stripped).toBe(plain.markdown);
+    expect(anchorLines(labelled.markdown)).toEqual(anchorLines(plain.markdown));
+    expect(labelled.stats).toEqual(plain.stats);
+  });
+
+  it('skips pages without a mapping', () => {
+    const { markdown } = synthesizeDocument(CONTENT_LIST, { pageLabels: [{ page: 2, label: 'ii' }] });
+    expect(labelLines(markdown)).toEqual([PRINTED_LABEL_PREFIX + 'ii']);
+    expect(markdown).toContain('<!-- p1 b2 -->');
+  });
+
+  it('accepts a Map as well as the page/label array', () => {
+    const { markdown } = synthesizeDocument(CONTENT_LIST, { pageLabels: new Map([[1, 'i']]) });
+    expect(labelLines(markdown)).toEqual([PRINTED_LABEL_PREFIX + 'i']);
+  });
+
+  it('finds the declared label through a discrete pageRanges mapping', () => {
+    // "2,4-6": page_idx 0 is physical page 2, so the p4 declaration applies.
+    const { markdown } = synthesizeDocument(
+      [
+        { type: 'text', text: '第二页', page_idx: 0 },
+        { type: 'text', text: '第四页', page_idx: 1 },
+      ],
+      { pageRanges: '2,4-6', pageLabels: [{ page: 4, label: '1' }] },
+    );
+    expect(markdown).toContain(PRINTED_LABEL_PREFIX + '1\n\n<!-- p4 b1 -->');
+    expect(labelLines(markdown)).toHaveLength(1);
+  });
+
+  it('reports a declaration that agrees with the printed numbers, silently', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(
+      withPrintedNumbers(['i', 'ii', 'iii']),
+      { pageLabels: [{ page: 1, label: 'i' }, { page: 2, label: 'ii' }, { page: 3, label: 'iii' }] },
+    );
+    expect(pageNumbers).toEqual({ detected: 3, total: 3, offsets: [0], declared: 3, mismatches: [] });
+    expect(warnings).toEqual([]);
+  });
+
+  it('matches an Arabic detection against a Roman declaration by value', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(
+      withPrintedNumbers(['1', '2', '3']),
+      { pageLabels: [{ page: 1, label: 'i' }, { page: 2, label: 'ii' }, { page: 3, label: 'iii' }] },
+    );
+    expect(pageNumbers.mismatches).toEqual([]);
+    expect(warnings).toEqual([]);
+  });
+
+  it('reports the pages a declaration disagrees about, and drops the offset heuristic', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(
+      withPrintedNumbers(['104', '105']),
+      { pageLabels: [{ page: 1, label: '105' }, { page: 2, label: '106' }] },
+    );
+    expect(pageNumbers.mismatches).toEqual([
+      { page: 1, declared: '105', declaredValue: 105, detected: 104 },
+      { page: 2, declared: '106', declaredValue: 106, detected: 105 },
+    ]);
+    // With a declaration in hand a constant offset is expected, so the offset
+    // warning would contradict it: the mismatch line belongs to the declaration
+    // (tools.js renders it into the page-map summary).
+    expect(warnings.filter((warning) => warning.includes('偏移'))).toEqual([]);
+  });
+
+  it('stays quiet when the cloud read no page number at all', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(NO_PRINTED_NUMBERS, { pageLabels: LABELS });
+    expect(pageNumbers).toEqual({ detected: 0, total: 2, offsets: [], declared: 0, mismatches: [] });
+    expect(warnings).toEqual([]);
+  });
+
+  it('keeps the offset heuristic when no declaration was passed', () => {
+    const { pageNumbers, warnings } = synthesizeDocument(withPrintedNumbers(['4', '5', '6']));
+    expect(pageNumbers).toEqual({ detected: 3, total: 3, offsets: [3] });
+    expect(warnings).toHaveLength(1);
   });
 });
