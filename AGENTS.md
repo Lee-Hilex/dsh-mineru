@@ -70,6 +70,7 @@ HTTP surface under `/plugin/mineru/*`.
 | `lib/page-ranges.js` | Pure `page_ranges` parsing, negative-index resolution and per-request split planning |
 | `lib/pdf-pages.js` | Pure best-effort local PDF page count (page-tree `/Count`, `/Type /Page` leaves, deflate object streams); reports `pages: null` rather than guessing |
 | `lib/chunk-merge.js` | Pure merge helpers: subset `page_idx` back to the original page, `full.md` stitching with a provenance line per chunk |
+| `lib/run-state.js` | Pure chunk-resume state: composite cache key, `decideRunResume` (fresh/reuse/resume), spec-aligned chunk map, snapshot `.complete.json` read/write |
 | `lib/skill.js` | `mineru-tools` skill content (model-facing usage guide, limits, error-code table) |
 | `lib/artifacts.js` | Per-run artifact dirs under `<workspace>/.dsh-mineru/artifacts/`, metadata, HMAC-signed preview URLs, file-name/run-name sanitization |
 | `lib/zip.js` | Dependency-free ZIP reader (STORED/DEFLATE, traversal-safe, byte caps) for MinerU result archives |
@@ -85,7 +86,7 @@ HTTP surface under `/plugin/mineru/*`.
 ```sh
 node --check lib/*.js     # syntax gate for every lib change
 npm test                  # vitest run (npm install first)
-npm pack --dry-run        # preview the shipped tarball (23 files expected)
+npm pack --dry-run        # preview the shipped tarball (24 files expected)
 ```
 
 Release flow: RELEASE.md (version bump → CHANGELOG + bilingual README sync →

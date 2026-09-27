@@ -1,0 +1,5 @@
+# Keep text test fixtures checked out as LF on every platform, so the
+# byte-exact replay test (rendered document.md vs pinned expected-document.md)
+# is not broken by a CRLF working tree on Windows. The renderer always writes
+# LF; pinning the fixture to LF keeps the comparison truly byte-exact.
+tests/fixtures/** text eol=lf

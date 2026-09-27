@@ -124,7 +124,7 @@ describe('fetch-level fake cloud — chunking over the cap', () => {
 });
 
 describe('fetch-level fake cloud — failure handling', () => {
-  it('fails the chunk matching a page spec, names it, downloads no zip for it, removes the run dir', async () => {
+  it('keeps a partial run: chunk 1 finished, chunk 2 failed and named', async () => {
     const pdf = buildPdf({ pages: 250 });
     const cwd = await makeWorkspace('long.pdf', pdf);
     const cloud = makeFakeCloud({ totalPages: 250, pollUntilDone: 1, failSpecs: ['201-250'] });
@@ -137,7 +137,22 @@ describe('fetch-level fake cloud — failure handling', () => {
     expect(err.message).toContain('第 2/2 片');
     expect(cloud.calls.submit).toHaveLength(2);
     expect(cloud.calls.download).toHaveLength(1); // only the first chunk downloaded
-    expect(await readdir(join(cwd, '.dsh-mineru', 'artifacts'))).toEqual([]);
+
+    // A chunked failure keeps the run dir as partial (chunk 1 done, chunk 2
+    // failed); re-running aligns by spec and redoes only chunk 2.
+    const runNames = await readdir(join(cwd, '.dsh-mineru', 'artifacts'));
+    expect(runNames).toHaveLength(1);
+    const keptDir = join(cwd, '.dsh-mineru', 'artifacts', runNames[0]);
+    const runJson = JSON.parse(await readFile(join(keptDir, 'run.json'), 'utf8'));
+    expect(runJson.status).toBe('partial');
+    expect(runJson.cacheKey).toEqual(expect.any(String));
+    expect(runJson.chunks.map((chunk) => [chunk.range, chunk.state])).toEqual([
+      ['1-200', 'done'],
+      ['201-250', 'failed'],
+    ]);
+    // Chunk 1 snapshot is on disk; chunk 2 failed before getting a directory.
+    expect(await readdir(join(keptDir, 'chunks', 'chunk-1'))).toContain('.complete.json');
+    expect(await readdir(join(keptDir, 'chunks'))).toEqual(['chunk-1']);
   });
 });
 

@@ -243,7 +243,7 @@ describe('mineru_parse auto-chunking', () => {
     expect(mergedList[mergedList.length - 1].page_idx).toBe(298);
   });
 
-  it('names the failing chunk and removes the run directory', async () => {
+  it('names the failing chunk and keeps the run as partial for resume', async () => {
     const { cwd } = await makeWorkspace('long.pdf', fakePdf(201));
     const client = makeFakeClient();
     client.submitAndWaitFile = async ({ opts }) => {
@@ -259,7 +259,22 @@ describe('mineru_parse auto-chunking', () => {
     expect(error).toBeInstanceOf(MineruError);
     expect(error.code).toBe('MINERU_PARSE_FAILED');
     expect(error.message).toContain('第 2/2 片（第 201 页）');
-    expect(await readdir(join(cwd, '.dsh-mineru', 'artifacts'))).toEqual([]);
+
+    // The run dir is kept (not removed) with status partial: chunk 1 done,
+    // chunk 2 failed — re-running aligns by spec and redoes only chunk 2.
+    const runNames = await readdir(join(cwd, '.dsh-mineru', 'artifacts'));
+    expect(runNames).toHaveLength(1);
+    const keptDir = join(cwd, '.dsh-mineru', 'artifacts', runNames[0]);
+    const runJson = JSON.parse(await readFile(join(keptDir, 'run.json'), 'utf8'));
+    expect(runJson.status).toBe('partial');
+    expect(runJson.cacheKey).toEqual(expect.any(String));
+    expect(runJson.chunks.map((chunk) => [chunk.range, chunk.state])).toEqual([
+      ['1-200', 'done'],
+      ['201', 'failed'],
+    ]);
+    // Chunk 1 snapshot is on disk; chunk 2 failed before getting a directory.
+    expect(await readdir(join(keptDir, 'chunks', 'chunk-1'))).toContain('.complete.json');
+    expect(await readdir(join(keptDir, 'chunks'))).toEqual(['chunk-1']);
   });
 
   it('adds the reason when a format without a local page count hits the cap', async () => {
