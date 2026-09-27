@@ -169,8 +169,42 @@ Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/min
 | `dataId` | | 业务数据 ID（可选，≤128 字符） |
 | `timeoutMs` | | 整个操作（含轮询）超时，默认取插件配置（10 分钟） |
 | `output` | | 结果目录基名，默认取源文件名 |
+| `anchor` | | 额外产出一份带页级块锚点的 `document.md`（每块一行 `<!-- pN bK -->`），默认 `false`；详见 [页级块锚点产物](#页级块锚点产物anchor) |
 
-**返回要点**：`ok`、所用 `api`/`modelVersion`、`taskId`、耗时、`runDir` 结果目录、截断的 Markdown 预览、Artifact 列表（Web 含签名预览链接）。
+**返回要点**：`ok`、所用 `api`/`modelVersion`、`taskId`、耗时、`runDir` 结果目录、截断的 Markdown 预览、Artifact 列表（Web 含签名预览链接）；带 `anchor: true` 时另附 `anchor` 摘要，指明写出的 `document.md`。
+
+### 页级块锚点产物（`anchor`）
+
+`full.md` 是连续正文，正文里没有任何信息能说明某句话来自哪一页，扫描件的结论因此无法回溯到页码。`anchor: true` 额外写一份 `document.md`，用每块前的一行 HTML 注释带上这个信息：
+
+```
+<!-- p12 b3 -->
+君子务本，本立而道生。
+
+<!-- p12 b4 -->
+![image](images/1efeb151….jpg)
+
+<!-- p13 b1 -->
+**表一 孔门弟子年表**
+<table><tr><td>姓名</td><td>字</td><td>生年</td></tr>…</table>
+```
+
+- `pN` 是**这份文件的物理页序**（1 基，含封面与前言），不是书本或期刊页面上印的印刷页码。云端对请求的页会重新编号，所以 `pageRanges: "2,4-6"` 下锚点就是 `p2, p4, p5, p6`——映射口径是 `requestedPages[page_idx]`，不是固定偏移；
+- `bK` 是该块在**本页内**按 `content_list.json` 顺序的序号。页眉、页脚、页码不进正文但仍占号，所以 `bK` 可能不连续（如 `b1, b2, b4`）——这是有意的：`bK` 始终指向 `content_list.json` 里同一条记录；
+- 文本块渲染正文；云端给了标题层级时映射成对应的 Markdown 标题；表格渲染为标题 + `table_body`；图片渲染为 `![](<img_path>)`；
+- 云端标为 `[Unreadable]` 的块保留锚点并显示 `[Unreadable]`；正文为空的块同样保留锚点；
+- 只有精准解析 API 的结果含 `content_list.json`，因此在 Agent 轻量解析下传 `anchor: true` 会返回一条提示而不产出 `document.md`，不会让整次解析失败。
+
+页面上印的是**印刷页码**，它和物理页序未必一致：前言用罗马数字编号，或析出文献保留原刊页码，都会让正文页码整体偏移。结果包里带可识别的 `page_number` 块时，渲染会拿它做一次尽力而为的自检，把每页的「印刷页码 − 物理页序」记进锚点摘要的 `pageNumbers` 字段（`{ detected, total, offsets }`，`offsets` 去重后升序），偏移恒为一套非零值时给出一行提示：
+
+```
+anchor.pageNumbers = { "detected": 4, "total": 4, "offsets": [3] }
+anchor.warnings    = ["印刷页码与物理页序整体相差 +3（前言用罗马数字，或用析出文献保留原刊页码，都会造成整体偏移）；锚点仍用物理页序，可用页码映射声明两者的对应关系"]
+```
+
+偏移不止一套时提示「多套偏移」，需要逐页核对。两者一致（偏移全为 `0`）或一页都没识别到时不提示；自检只读不写，锚点本身不受影响。
+
+不带 `pageRanges` 时按请求顺序从第 1 页起编号。使用倒数页码范围（如 `"2--2"`）时云端不会给出文档总页数，锚点会退化为「按你请求的第一个页码起算」，并在结果里明确提示需要人工核对。
 
 **长 PDF 自动分片**：当一次精准解析请求会要超过 200 页时（整份工作区 PDF 超过 200 页，或 `pageRanges` 选出的页数超过 200 页），插件自动按顺序切成若干 `page_ranges` 分片，逐片提交与轮询，最后合并成与单次请求一致的产物布局。不需要新参数，也不在本地拆 PDF：同一份文件只上传一次，每次只改请求的页码范围。
 
@@ -191,6 +225,7 @@ Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/min
 | `sources` | ✅ | 文件路径 / URL 混合列表 |
 | `outputPrefix` | | 结果目录基名，默认 `batch` |
 | `dataIdPrefix` | | 业务数据 ID 前缀，每项自动追加序号（可选） |
+| `anchor` | | 同 `mineru_parse`：为每个文档各写一份 `document.md`（默认 `false`） |
 | 其余 | | 同 `mineru_parse` 的公共选项（`mode` 除外——本工具强制精准解析） |
 
 **分批规则**：本地文件每批 ≤ 50 个、URL 每批 ≤ 200 个、单次调用总共 ≤ 1000 个；超出会报错并提示拆分调用。
@@ -208,6 +243,7 @@ Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/min
 | `wait` | | 是否轮询等待任务完成，默认 `false`（只查一次） |
 | `collect` | | 任务完成时是否下载结果落地为 Artifact，默认 `true` |
 | `output` | | 收集结果目录基名，默认 `task` |
+| `anchor` | | 收集结果时是否额外写一份 `document.md`（默认 `false`） |
 | `timeoutMs` | | `wait` 模式下的超时 |
 
 **典型场景**：解析大 PDF 时 `mineru_parse` 超时了 → 告诉 Agent「用 mineru_task 继续收集 taskId=xxx 的结果」。
@@ -224,6 +260,7 @@ Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/min
 .dsh-mineru/artifacts/<run>/
 ├── full.md                  # 结构化 Markdown 主结果（两模式都有）
 ├── run.json                 # 本次解析元数据（来源、API、模型、耗时等）
+├── document.md              # 页级块锚点 Markdown（仅精准解析 + anchor: true）
 ├── *_content_list.json      # 内容结构化清单（仅精准解析）
 ├── layout.json              # 版面布局数据（仅精准解析）
 ├── *_model.json             # 模型原始输出（仅精准解析）
@@ -233,6 +270,7 @@ Headless 与 Web 共用同一套工具语义；也可以在会话中输入 `/min
 ```
 
 - 工具结果里附**限长 Markdown 预览**（默认前 12 KB），完整内容请用 `read` 工具读取 `full.md`；
+- `document.md` 是**可选增量**（`anchor: true` 才产出）：`full.md`、`content_list.json`、`layout.json` 的形态与现在完全一致，不用 `anchor` 的用户感知不到任何变化；
 - **Web 界面**：Artifact 带 HMAC 签名预览链接（默认有效期 24 小时），点开即可看/下载；工具结果卡片可直接打开文件；
 - **Headless**：直接使用返回的绝对路径。
 
