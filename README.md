@@ -169,8 +169,49 @@ Parses a **workspace file path** or **http(s) URL** into structured Markdown.
 | `dataId` | | Business data ID (optional, ≤ 128 chars) |
 | `timeoutMs` | | Whole-operation timeout incl. polling; defaults to plugin config (10 min) |
 | `output` | | Result directory base name; defaults to the source file name |
+| `anchor` | | Also write `document.md`, a page-anchored copy of the result (one `<!-- pN bK -->` per block); default `false` — see [Page-anchored Markdown](#page-anchored-markdown-anchor) |
 
-**Result highlights**: `ok`, the `api`/`modelVersion` used, `taskId`, duration, `runDir`, a truncated Markdown preview, and the artifact list (with signed preview links on Web).
+**Result highlights**: `ok`, the `api`/`modelVersion` used, `taskId`, duration, `runDir`, a truncated Markdown preview, the artifact list (with signed preview links on Web), and — with `anchor: true` — an `anchor` summary naming the `document.md` that was written.
+
+### Page-anchored Markdown (`anchor`)
+
+`full.md` is prose: nothing in it says which page a sentence came from, so a
+claim drawn from a scan cannot be cited back to a page. `anchor: true` adds a
+`document.md` that carries that information as an HTML comment per block:
+
+```
+<!-- p12 b3 -->
+君子务本，本立而道生。
+
+<!-- p12 b4 -->
+![image](images/1efeb151….jpg)
+
+<!-- p13 b1 -->
+**表一 孔门弟子年表**
+<table><tr><td>姓名</td><td>字</td><td>生年</td></tr>…</table>
+```
+
+- `pN` is the page in the **original document** (1-based). The cloud renumbers
+  the pages you asked for, so with `pageRanges: "2,4-6"` the anchors are
+  `p2, p4, p5, p6` — the mapping is `requestedPages[page_idx]`, not a fixed
+  offset;
+- `bK` is the K-th block **of that page** in `content_list.json` order. Page
+  headers, footers and page numbers stay out of the body but still occupy their
+  number, so `bK` can have gaps (e.g. `b1, b2, b4`) — that is deliberate: `bK`
+  always names the same record in `content_list.json`;
+- text blocks render their text, a cloud heading level becomes the matching
+  Markdown heading, tables render as their caption plus `table_body`, images as
+  `![](<img_path>)`;
+- a block the cloud marked `[Unreadable]` keeps its anchor and shows
+  `[Unreadable]`; a block with empty text keeps its anchor too;
+- the precision API is the only mode that returns `content_list.json`, so
+  `anchor: true` under the Agent API returns a warning and no `document.md`
+  instead of failing.
+
+Without `pageRanges` the pages are numbered from 1 in request order. With a
+negative range (`"2--2"`) the cloud does not tell us the document length, so the
+anchors fall back to the first page you asked for and the result carries a
+warning telling you to check them.
 
 ### `mineru_batch_parse` — batch parsing (Precision only)
 
@@ -181,6 +222,7 @@ Parses many documents in one call; **local paths and URLs can be mixed**, submis
 | `sources` | ✅ | Mixed list of file paths / URLs |
 | `outputPrefix` | | Result directory base name, default `batch` |
 | `dataIdPrefix` | | Business data ID prefix; a sequence number is appended per item (optional) |
+| `anchor` | | Same as `mineru_parse`: write a `document.md` per document (default `false`) |
 | others | | Same shared options as `mineru_parse` (except `mode` — this tool is Precision-only) |
 
 **Chunking rules**: local files ≤ 50 per batch, URLs ≤ 200 per batch, ≤ 1000 total per call; exceeding these errors with a hint to split the call.
@@ -198,6 +240,7 @@ Parses many documents in one call; **local paths and URLs can be mixed**, submis
 | `wait` | | Poll until the task finishes, default `false` (query once) |
 | `collect` | | Download the result into an Artifact when done, default `true` |
 | `output` | | Result directory base name, default `task` |
+| `anchor` | | Also write `document.md` when collecting (default `false`) |
 | `timeoutMs` | | Timeout for `wait` mode |
 
 **Typical scenario**: `mineru_parse` timed out on a large PDF → tell the agent "collect the result for taskId=xxx with mineru_task".
@@ -214,6 +257,7 @@ All results land in **`<workspace>/.dsh-mineru/artifacts/<run>/`** (`<workspace>
 .dsh-mineru/artifacts/<run>/
 ├── full.md                  # Structured Markdown (both modes)
 ├── run.json                 # Run metadata (source, API, model, duration, …)
+├── document.md              # Page-anchored Markdown (Precision + anchor: true only)
 ├── *_content_list.json      # Structured content list (Precision only)
 ├── layout.json              # Layout data (Precision only)
 ├── *_model.json             # Raw model output (Precision only)
@@ -223,6 +267,7 @@ All results land in **`<workspace>/.dsh-mineru/artifacts/<run>/`** (`<workspace>
 ```
 
 - Tool results carry a **bounded Markdown preview** (first 12 KB by default); read the full text from `full.md` with the `read` tool;
+- `document.md` is **opt-in** (`anchor: true`) and purely additional: `full.md`, `content_list.json` and `layout.json` keep exactly the shape they have today, so nothing changes for users who do not pass `anchor`;
 - **Web UI**: artifacts get HMAC-signed preview URLs (24 h lifetime by default) — click to view/download; tool-result cards open files directly;
 - **Headless**: use the absolute paths returned by the tool.
 

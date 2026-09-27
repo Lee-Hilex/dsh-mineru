@@ -4,7 +4,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
-- No changes yet (latest release is 0.1.13).
+### Added
+
+- `mineru_parse` (and `mineru_batch_parse` / `mineru_task`) accept an optional `anchor` boolean, default `false`. With `anchor: true` a precision result additionally gets a `document.md` next to `full.md`: every block of `content_list.json` in order, preceded by one `<!-- pN bK -->` anchor, where `pN` is the page in the original document (1-based, mapped through `requestedPages[page_idx]` so discrete `pageRanges` such as `"2,4-6"` and chunked requests stay correct) and `bK` is the block's position inside that page. Text blocks render their text (a cloud heading level becomes the matching Markdown heading), tables render as caption plus `table_body`, images as `![](<img_path>)`, and blocks the cloud marked `[Unreadable]` — or left empty — keep their anchor instead of disappearing. The option is purely additive: `full.md`, `content_list.json` and `layout.json` keep their current shape, an Agent-API result (no `content_list.json`) only produces a warning, and the new file shows up in the artifact list.
+- `tests/anchors.spec.js` (synthetic `content_list` fixtures) pins the anchor contract: 1-based pages, per-page block counters, page-internal ordering, discrete and negative `pageRanges`, table/image/heading/unreadable rendering, and the `p?` fallback; `tests/anchors-tool.spec.js` covers the `anchor: true` wiring (file written next to `full.md`, listed as an artifact, absent when the option is off, warning-only under the Agent API).
 
 ## [0.1.13] - 2026-09-25
 
