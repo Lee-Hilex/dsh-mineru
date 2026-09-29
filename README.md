@@ -56,7 +56,7 @@ Typical use cases:
 
 ### Step 1: Install
 
-> **Note**: Requires an existing DeepSeek Harness installation (`0.1.0-rc.6` or a compatible `0.1.x`) with the `dsh` CLI available.
+> **Note**: Requires an existing DeepSeek Harness installation on **`0.1.7` or newer, including the `0.2.0` line** (the six `@deepseek-ai/dsh-*` `peerDependencies` declare `>=0.1.7-rc.1 <0.3.0`) with the `dsh` CLI available.
 
 **From npm (recommended)**
 

@@ -4,6 +4,10 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
+### Changed
+
+- Raise the six `@deepseek-ai/dsh-*` `peerDependencies` from `^0.1.5-rc.1` to `>=0.1.7-rc.1 <0.3.0`, so the declared window covers DSH `0.1.7` and above **including the `0.2.0` line**. DSH >= 0.2.0 evaluates these peers against the running runtime and disables the whole plugin row when one fails (`Plugin dsh-mineru@<version> is incompatible with dsh 0.2.0-rc.1: peerDependencies {...}`); `^0.1.5-rc.1` stops at `<0.2.0`, so a 0.2.0 host turned the plugin off entirely — no `mineru_*` tools, no `mineru-tools` skill, no `/plugin/mineru` routes. `@deepseek-ai/cordis` and `@deepseek-ai/schemastery` are not gated and keep their ranges. The runtime code is unchanged: the settings seam is already feature-detected, so one build serves both lines. Docs: both READMEs, AGENTS.md and the RELEASE.md checklist, plus a migration note under `docs/plans/`.
+
 ### Added
 
 - Automatic chunking for oversized precision requests: when one request would ask for more than 200 pages (a workspace PDF larger than that, or a `pageRanges` selection over 200 pages), `mineru_parse` splits it into sequential `page_ranges` chunks, submits and polls them one by one, and merges the outcome into the layout a single request produces — no new parameter, and no local PDF rewrite (the file is uploaded once, only the requested range changes per request). `full.md` is concatenated with one provenance line per chunk, `content_list.json` is merged with `page_idx` mapped back to the original document (the API renumbers it from 0 for every requested subset), `images/` is the union of all chunks, and `layout.json` / `<uuid>_model.json` stay per chunk under `chunks/chunk-<n>/` because they are page-indexed arrays. `run.json` and the tool result's new `chunkCount` / `chunks` fields report each chunk's page range, `batchId`, state and duration; a failed chunk reports its page range in the error.

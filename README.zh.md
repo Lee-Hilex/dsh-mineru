@@ -56,7 +56,7 @@ dsh-mineru 把 [MinerU](https://mineru.net)（OpenDataLab 出品的高精度文�
 
 ### 第 1 步：安装
 
-> **Note**: 需要已安装 DeepSeek Harness（`0.1.0-rc.6` 或兼容的 `0.1.x`），且 `dsh` 命令可用。
+> **Note**: 需要已安装 DeepSeek Harness（**`0.1.7` 及以上，含 `0.2.0` 线**；六个 `@deepseek-ai/dsh-*` 的 `peerDependencies` 声明为 `>=0.1.7-rc.1 <0.3.0`），且 `dsh` 命令可用。
 
 **从 npm 安装（推荐）**
 
