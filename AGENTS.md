@@ -45,8 +45,13 @@ HTTP surface under `/plugin/mineru/*`.
   Config resolves schema defaults < composition base < the profile entry patch;
   the MinerU token VALUE lives in DSH Credentials under `tokenCredential`
   (default `MINERU_API_TOKEN`), never in settings or composition files.
-- **Peers**: `@deepseek-ai/*` host peers are `^0.1.5-rc.1` (semver prerelease
-  rules: `0.1.5-rc.x` cannot satisfy `^0.1.0-rc.6`).
+- **Peers**: the six `@deepseek-ai/dsh-*` host peers are `>=0.1.7-rc.1 <0.3.0`.
+  DSH >= 0.2.0 evaluates every `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` peer
+  against the running runtime with `includePrerelease` and disables the whole
+  plugin row when one fails, so the range must cover both the `0.1.7` line and
+  the `0.2.0` line. Caret ranges such as `^0.1.5-rc.1` stop at `<0.2.0` and are
+  rejected there. `@deepseek-ai/cordis` and `@deepseek-ai/schemastery` are not
+  gated and keep their own ranges.
 - **Commits**: `<type>: <English description>`; docs ride with the code change
   in the same commit. See CONTRIBUTING.md and RELEASE.md (the release SOP is
   mandatory — version, CHANGELOG and bilingual README ship together).
@@ -138,4 +143,6 @@ web-auth (non-interactive terminals cannot complete it — see RELEASE.md).
   profile.
 - `--dsw-alias-brand-primary` is a foreground token (near-black/near-white),
   not an accent — see the theming convention above.
-- Peer ranges must stay `^0.1.5-rc.1` for the six `@deepseek-ai/dsh-*` peers.
+- Peer ranges must stay `>=0.1.7-rc.1 <0.3.0` for the six `@deepseek-ai/dsh-*`
+  peers. `^0.1.5-rc.1` — and any other `^0.1.x` form — stops at `<0.2.0`, so
+  DSH 0.2.0 disables the plugin row instead of merely warning.
