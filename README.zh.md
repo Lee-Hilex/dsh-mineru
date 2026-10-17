@@ -1,8 +1,8 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.1.13-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
-[![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
+[![version](https://img.shields.io/badge/version-0.1.14-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
+[![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.2.0--rc.2-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
 > 仓库: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru) · [更新日志](CHANGELOG.md)
@@ -45,6 +45,7 @@ dsh-mineru 把 [MinerU](https://mineru.net)（OpenDataLab 出品的高精度文�
 
 ### 核心能力
 
+- **适配 DSH 0.2.0-rc.2** — 使用真实 Loader、设置服务和工具运行时验证，同时保留 `0.1.5-rc.x` 的 peer 范围与旧设置接口；
 - **双 API 自动切换** — 按是否配置 Token 自动选择精准解析或轻量解析，也可手动指定；
 - **渐进式工具曝光** — 平时只挂一个极小的 `mineru_activate` 引导工具，激活后才挂载完整工具集，省上下文；
 - **拖拽上传** — 文件直接拖进聊天窗口，路径自动填入输入框，纯文本模型也能处理文档；
@@ -56,7 +57,7 @@ dsh-mineru 把 [MinerU](https://mineru.net)（OpenDataLab 出品的高精度文�
 
 ### 第 1 步：安装
 
-> **Note**: 需要已安装 DeepSeek Harness（`0.1.0-rc.6` 或兼容的 `0.1.x`），且 `dsh` 命令可用。
+> **Note**: 需要已安装 DeepSeek Harness `0.2.0-rc.2` 或兼容的 `0.1.5-rc.x`，且 `dsh` 命令可用。`0.2.0-rc.2` 请使用插件 `0.1.14` 或更高版本；`0.1.13` 仅声明旧宿主版本范围。若 npm 仍提供 `0.1.13`，请按下文从源码打包安装。
 
 **从 npm 安装（推荐）**
 
@@ -70,12 +71,15 @@ dsh plugin --profile headless add dsh-mineru   # 无头（Headless）模式使�
 ```bash
 git clone git@github.com:Lee-Hilex/dsh-mineru.git
 cd dsh-mineru
-npm install        # 安装 peer 依赖（本包无构建步骤，无需 build）
+npm ci             # 开发测试推荐 Node.js 24；本包无需 build
+npm test           # 包含真实 DSH 0.2.0-rc.2 集成测试
 npm pack           # 产出 dsh-mineru-<version>.tgz
 dsh plugin --profile web add ./dsh-mineru-<version>.tgz
 ```
 
 修改源码后重新 `npm pack` 并重装即可。注意本地安装请用 tgz（`pnpm link:` 安装会使 `@deepseek-ai` 依赖解析脱离 profile）。
+
+桌面端 profile 使用 `dsh plugin --profile desktop add ./dsh-mineru-0.1.14.tgz`。兼容声明可直接通过宿主版本检查，无需 `allow-version` 豁免。`npm run test:compat` 仅运行真实宿主兼容测试；MinerU 响应采用模拟服务，测试不会上传文档或消耗 API 额度。
 
 ### 第 2 步：验证安装
 

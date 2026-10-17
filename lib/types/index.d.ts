@@ -6,6 +6,8 @@ import type { Context } from '@deepseek-ai/cordis';
 import type z from '@deepseek-ai/schemastery';
 
 export declare const name: 'mineru';
+export declare const PLUGIN_VERSION: string;
 export declare const inject: string[];
 export declare const Config: z<object>;
+export declare function settingsNamespace(ctx: Context | undefined): string;
 export declare function apply(ctx: Context, config?: Record<string, unknown>): void;

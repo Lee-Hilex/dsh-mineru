@@ -4,6 +4,19 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 
 ## [Unreleased]
 
+### Fixed
+
+- Accept DSH `0.2.0-rc.2` through the actual runtime compatibility gate: all six `@deepseek-ai/dsh-*` peers now declare `^0.1.5-rc.1 || ^0.2.0-rc.2`. Preserve the legacy settings path, and pin development host packages to `0.2.0-rc.2` so regressions run against the target runtime rather than only mocked services.
+- Validate live settings on the schema-derived settings path as well as the custom HTTP path. Numeric ranges, integer steps, language values, credential reference names and artifact directory names now reject invalid writes before persistence, including writes made through the native settings service.
+- Restrict `/plugin/mineru/credential` writes to the configured `tokenCredential`. A request naming another reference is rejected instead of overwriting or deleting an unrelated credential; malformed credential bodies and array config patches return `400`.
+- Register the browser's bilingual dictionaries only once. DSH rejects duplicate namespace/locale registrations, which previously skipped language binding and the locale watcher. Update browser declarations to use the current Cordis context instead of the removed `dsh-client-runtime` package.
+- Keep JSON-request cancellation and timeouts active through response-body reads, and reject an already-cancelled call before sending it. Receiving headers alone no longer disables the deadline on a stalled response.
+
+### Development
+
+- Add real-runtime compatibility tests (`npm run test:compat`): package admission without exemptions, Loader activation, progressive tool visibility and disposal, settings persistence and stale-write conflicts, credential rotation and redaction, validation failures, and parsing through the real tool runtime with fetch-level simulated MinerU responses.
+- Upgrade Vitest from `3.x` to patched `4.1.11+` and regenerate the lockfile against the target SDK. Development tests use supported Node.js 20.19+, 22.12+ or 24+ releases (24 recommended); the plugin runtime requirement remains Node.js 18+.
+
 ### Added
 
 - Automatic chunking for oversized precision requests: when one request would ask for more than 200 pages (a workspace PDF larger than that, or a `pageRanges` selection over 200 pages), `mineru_parse` splits it into sequential `page_ranges` chunks, submits and polls them one by one, and merges the outcome into the layout a single request produces — no new parameter, and no local PDF rewrite (the file is uploaded once, only the requested range changes per request). `full.md` is concatenated with one provenance line per chunk, `content_list.json` is merged with `page_idx` mapped back to the original document (the API renumbers it from 0 for every requested subset), `images/` is the union of all chunks, and `layout.json` / `<uuid>_model.json` stay per chunk under `chunks/chunk-<n>/` because they are page-indexed arrays. `run.json` and the tool result's new `chunkCount` / `chunks` fields report each chunk's page range, `batchId`, state and duration; a failed chunk reports its page range in the error.

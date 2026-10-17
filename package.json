@@ -1,6 +1,6 @@
 {
   "name": "dsh-mineru",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "dsh-mineru: MinerU 文档解析插件 for DeepSeek Harness — 多模态全格式 (PDF/Word/PPT/Excel/HTML/图片) → 结构化 Markdown. 填 Token 走精准解析 API, 留空走 Agent 轻量解析 API. 注意: 解析需把文件上传至 MinerU 远端(内容出网), 无完全离线模式, 涉密/不得出网材料请勿使用.",
   "type": "module",
   "main": "lib/index.js",
@@ -42,13 +42,24 @@
     }
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:compat": "vitest run tests/dsh-compat.spec.js"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.0"
   },
   "devDependencies": {
-    "vitest": "^3.2.0"
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-app-boot": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-scope": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-settings": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-skill": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -56,12 +67,12 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/schemastery": "^3.18.0",
-    "@deepseek-ai/dsh-tools": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-settings": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-skill": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-host-webserver": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-llm": "^0.1.5-rc.1"
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.1 || ^0.2.0-rc.2",
+    "@deepseek-ai/dsh-settings": "^0.1.5-rc.1 || ^0.2.0-rc.2",
+    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.1 || ^0.2.0-rc.2",
+    "@deepseek-ai/dsh-skill": "^0.1.5-rc.1 || ^0.2.0-rc.2",
+    "@deepseek-ai/dsh-host-webserver": "^0.1.5-rc.1 || ^0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "^0.1.5-rc.1 || ^0.2.0-rc.2"
   },
   "license": "MIT",
   "keywords": [

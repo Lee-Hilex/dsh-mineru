@@ -38,7 +38,8 @@ npm pack --pack-destination D:\Users\Lee\Desktop\dsh
   - [ ] `lib/client.js` 必须以 `window.__ModuleLoader__.load` 开头注册（宿主会拒绝"加载但未注册"的 client bundle）：
     `tar -xOf dsh-mineru-<version>.tgz package/lib/client.js | head -c 32` 应含 `__ModuleLoader__`
   - [ ] `lib/client.js` 中不得出现裸的 `--dsw-alias-brand-primary`（深色模式白底白字事故，见 Issue #3）；只允许 `--dsw-alias-brand-primary-new-colorprimary-new-color`
-  - [ ] tgz 内 `package.json` 的 `version` 与发布版本一致；6 个 `@deepseek-ai/dsh-*` peer 为 `^0.1.5-rc.1`
+  - [ ] tgz 内 `package.json` 的 `version` 与发布版本一致；6 个 `@deepseek-ai/dsh-*` peer 为 `^0.1.5-rc.1 || ^0.2.0-rc.2`
+  - [ ] `npm run test:compat` 通过真实 DSH `0.2.0-rc.2` 宿主检查，不配置 `allow-version` 豁免
 - [ ] 本地安装验证（可选但推荐）：
 
 ```powershell

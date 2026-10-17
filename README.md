@@ -1,8 +1,8 @@
 # dsh-mineru
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-0.1.13-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
-[![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.1.0--rc.6%2B-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
+[![version](https://img.shields.io/badge/version-0.1.14-blue)](https://github.com/Lee-Hilex/dsh-mineru/releases)
+[![dsh](https://img.shields.io/badge/DeepSeek%20Harness-0.2.0--rc.2-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
 [![MinerU](https://img.shields.io/badge/MinerU-API-4d6bfe)](https://mineru.net/apiManage/docs)
 
 > Repository: <https://github.com/Lee-Hilex/dsh-mineru> · npm: [`dsh-mineru`](https://www.npmjs.com/package/dsh-mineru) · [Changelog](CHANGELOG.md)
@@ -45,6 +45,7 @@ Typical use cases:
 
 ### Highlights
 
+- **DSH 0.2.0-rc.2 compatibility** — tested with the real Loader, settings service and tool runtime; the `0.1.5-rc.x` peer range and legacy settings path are retained;
 - **Dual API modes, auto-selected** — chooses Precision or Agent parsing based on whether a token is configured; can be overridden per call;
 - **Progressive tool exposure** — only the tiny `mineru_activate` bootstrap is visible until the agent activates the full toolset, saving context;
 - **Drag-and-drop uploads** — drop a file into the chat; its path lands in the composer draft so text-only models can process documents;
@@ -56,7 +57,7 @@ Typical use cases:
 
 ### Step 1: Install
 
-> **Note**: Requires an existing DeepSeek Harness installation (`0.1.0-rc.6` or a compatible `0.1.x`) with the `dsh` CLI available.
+> **Note**: Requires DeepSeek Harness `0.2.0-rc.2` or a compatible `0.1.5-rc.x` installation with the `dsh` CLI available. On `0.2.0-rc.2`, use plugin `0.1.14` or later: `0.1.13` declares only the older host range. If npm still serves `0.1.13`, install a source-built tarball below.
 
 **From npm (recommended)**
 
@@ -70,12 +71,15 @@ dsh plugin --profile headless add dsh-mineru   # Headless profile
 ```bash
 git clone git@github.com:Lee-Hilex/dsh-mineru.git
 cd dsh-mineru
-npm install        # installs peer deps (no build step for this package)
+npm ci             # development: Node.js 24 recommended; no build step
+npm test           # includes real DSH 0.2.0-rc.2 integration tests
 npm pack           # produces dsh-mineru-<version>.tgz
 dsh plugin --profile web add ./dsh-mineru-<version>.tgz
 ```
 
 Run `npm pack` again and re-install after changing the source. Local installs must use the tarball (`pnpm link:` installs resolve `@deepseek-ai` peers outside the profile).
+
+For the desktop profile, use `dsh plugin --profile desktop add ./dsh-mineru-0.1.14.tgz`. Compatible package metadata passes the runtime gate without an `allow-version` exemption. `npm run test:compat` runs only the real-runtime compatibility checks; MinerU responses are simulated, so the tests upload no documents and consume no API quota.
 
 ### Step 2: Verify the install
 

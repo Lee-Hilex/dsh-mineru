@@ -1,5 +1,48 @@
-import { describe, it, expect } from 'vitest';
-import { DailyCounter, MineruError, RateLimiter, effectiveModelFor, resolveOptions } from '../lib/mineru-client.js';
+import { describe, it, expect, vi } from 'vitest';
+import { DailyCounter, MineruClient, MineruError, RateLimiter, effectiveModelFor, resolveOptions } from '../lib/mineru-client.js';
+
+describe('JSON request lifetime', () => {
+  it('does not send a request when the caller has already cancelled', async () => {
+    const request = vi.fn(async () => new Response(JSON.stringify({ code: 0, data: { state: 'done' } })));
+    vi.stubGlobal('fetch', request);
+    try {
+      const controller = new AbortController();
+      controller.abort();
+      const client = new MineruClient({ baseUrl: 'https://mineru.test' });
+      await expect(client.queryTask({ taskId: 'cancelled', api: 'agent', signal: controller.signal }))
+        .rejects.toMatchObject({ name: 'AbortError' });
+      expect(request).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps the deadline active while reading a stalled JSON response body', async () => {
+    vi.useFakeTimers();
+    let body;
+    vi.stubGlobal('fetch', async (_url, { signal }) => new Response(new ReadableStream({
+      start(controller) {
+        body = controller;
+        signal.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')), { once: true });
+      },
+    })));
+    const client = new MineruClient({ baseUrl: 'https://mineru.test' });
+    let settled = false;
+    const outcome = client.queryTask({ taskId: 'stalled', api: 'agent' })
+      .then((value) => ({ value }), (error) => ({ error }))
+      .then((result) => { settled = true; return result; });
+    try {
+      await vi.advanceTimersByTimeAsync(60001);
+      expect(settled, 'headers alone must not end the request deadline').toBe(true);
+      expect((await outcome).error).toMatchObject({ code: 'MINERU_TIMEOUT' });
+    } finally {
+      body?.error(new Error('test cleanup'));
+      await outcome;
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
 describe('RateLimiter', () => {
   it('lets capacity tokens through immediately and blocks the rest', async () => {
