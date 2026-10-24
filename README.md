@@ -57,7 +57,7 @@ Typical use cases:
 
 ### Step 1: Install
 
-> **Note**: Requires DeepSeek Harness `0.2.0-rc.2` or a compatible `0.1.5-rc.x` installation with the `dsh` CLI available. On `0.2.0-rc.2`, use plugin `0.1.14` or later: `0.1.13` declares only the older host range. If npm still serves `0.1.13`, install a source-built tarball below.
+> **Note**: Requires DeepSeek Harness `0.2.0-rc.1` or newer on the `0.2.0` line, or a compatible `0.1.5-rc.x` installation, with the `dsh` CLI available. On the `0.2.0` line, use plugin `0.1.15` or later: `0.1.14` covers only `0.2.0-rc.2+`, `0.1.13` only the older host range. If npm still serves `0.1.13`, install a source-built tarball below.
 
 **From npm (recommended)**
 

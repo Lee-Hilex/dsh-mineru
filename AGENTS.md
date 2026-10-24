@@ -46,8 +46,9 @@ HTTP surface under `/plugin/mineru/*`.
   the MinerU token VALUE lives in DSH Credentials under `tokenCredential`
   (default `MINERU_API_TOKEN`), never in settings or composition files.
 - **Peers**: the six `@deepseek-ai/dsh-*` host peers are
-  `^0.1.5-rc.1 || ^0.2.0-rc.2`; development host packages are pinned to
-  `0.2.0-rc.2`. Test admission with the real `evaluatePluginCompatibility`
+  `^0.1.5-rc.1 || ^0.2.0-rc.1`, covering the `0.2.0` line from `0.2.0-rc.1`
+  onward; development host packages are pinned to `0.2.0-rc.2`. Test
+  admission with the real `evaluatePluginCompatibility`
   from `dsh-app-boot`, because mocked services cannot validate installation.
 - **Commits**: `<type>: <English description>`; docs ride with the code change
   in the same commit. See CONTRIBUTING.md and RELEASE.md (the release SOP is
@@ -141,8 +142,9 @@ web-auth (non-interactive terminals cannot complete it — see RELEASE.md).
   profile.
 - `--dsw-alias-brand-primary` is a foreground token (near-black/near-white),
   not an accent — see the theming convention above.
-- Peer ranges must include both `^0.1.5-rc.1` and `^0.2.0-rc.2` for the six
-  `@deepseek-ai/dsh-*` peers. New runtime lines require integration validation.
+- Peer ranges must include `^0.1.5-rc.1` and cover the `0.2.0` line from
+  `0.2.0-rc.1` on for the six `@deepseek-ai/dsh-*` peers. New runtime lines
+  require integration validation.
 - DSH 0.2 derives settings from Config and does not call the legacy
   `register` validator. Keep range/name constraints in the schema too, and
   reject invalid HTTP patches before passing them to the settings service.

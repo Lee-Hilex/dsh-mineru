@@ -2,6 +2,12 @@
 
 All notable changes to **dsh-mineru** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/), and versioning follows [Semantic Versioning](https://semver.org/lang/zh-CN/). 版本号唯一来源是 `package.json`。
 
+## [0.1.15] - 2026-10-24
+
+### Fixed
+
+- DSH `0.2.0-rc.1` is no longer silently skipped by the host compatibility gate: the six `@deepseek-ai/dsh-*` peers now declare `^0.1.5-rc.1 || ^0.2.0-rc.1` (previously `|| ^0.2.0-rc.2`), so every version from `0.2.0-rc.1` through the `0.2.x` line passes `evaluatePluginCompatibility`, while `0.3.0` prereleases stay excluded. Fixes #20.
+
 ## [0.1.14] - 2026-10-24
 
 ### Fixed
