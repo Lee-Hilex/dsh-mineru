@@ -2,7 +2,7 @@
 
 All notable changes to **dsh-mineru** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/), and versioning follows [Semantic Versioning](https://semver.org/lang/zh-CN/). 版本号唯一来源是 `package.json`。
 
-## [Unreleased]
+## [0.1.14] - 2026-10-24
 
 ### Fixed
 
@@ -144,6 +144,7 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
   - 限流感知（令牌桶 + 429 退避 + 每日限额）；
   - Artifact 落地与 Web 界面（设置卡片、工具结果卡片、HMAC 签名预览）。
 
+[0.1.14]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.14
 [0.1.13]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.13
 [0.1.12]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.12
 [0.1.11]: https://github.com/Lee-Hilex/dsh-mineru/releases/tag/v0.1.11
