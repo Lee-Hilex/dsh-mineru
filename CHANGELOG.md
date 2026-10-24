@@ -11,8 +11,12 @@ All notable changes to **dsh-mineru** are documented here. The format follows [K
 - Restrict `/plugin/mineru/credential` writes to the configured `tokenCredential`. A request naming another reference is rejected instead of overwriting or deleting an unrelated credential; malformed credential bodies and array config patches return `400`.
 - Register the browser's bilingual dictionaries only once. DSH rejects duplicate namespace/locale registrations, which previously skipped language binding and the locale watcher. Update browser declarations to use the current Cordis context instead of the removed `dsh-client-runtime` package.
 - Keep JSON-request cancellation and timeouts active through response-body reads, and reject an already-cancelled call before sending it. Receiving headers alone no longer disables the deadline on a stalled response.
+- Settings card (Web): the extra formats (docx/html/latex) checkboxes now read any persisted shape — an array, a scalar, or a string list — instead of treating every non-array value as "nothing checked", so a card saved on any host shows what is actually configured. The unsaved-changes indicator is now computed by diffing the current form against the server baseline read at load, not by a write flag, so touching a checkbox is no longer enough to light "有未保存的更改", and saving resets it even when the host echoes the same values back. Fixes #22.
 
 ### Development
+
+- Add settings-card unit tests (`tests/settings-card.spec.js`): the shipped `client.js` bundle is sliced at its marked settings-view helper and executed in a sandbox, pinning the formats-normalization and dirty-flag contracts for the fix above.
+- Add settings round-trip tests against the real 0.2.0-rc.2 host (`tests/settings-roundtrip.spec.js`): full and empty `extraFormats` patches persist and read back byte-identically through the settings service.
 
 - Add real-runtime compatibility tests (`npm run test:compat`): package admission without exemptions, Loader activation, progressive tool visibility and disposal, settings persistence and stale-write conflicts, credential rotation and redaction, validation failures, and parsing through the real tool runtime with fetch-level simulated MinerU responses.
 - Upgrade Vitest from `3.x` to patched `4.1.11+` and regenerate the lockfile against the target SDK. Development tests use supported Node.js 20.19+, 22.12+ or 24+ releases (24 recommended); the plugin runtime requirement remains Node.js 18+.
