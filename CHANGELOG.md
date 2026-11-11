@@ -2,6 +2,12 @@
 
 All notable changes to **dsh-mineru** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/), and versioning follows [Semantic Versioning](https://semver.org/lang/zh-CN/). 版本号唯一来源是 `package.json`。
 
+## [0.1.17] - 2026-11-11
+
+### Fixed
+
+- The MinerU settings panel could be unreachable: the client only registered a `settings.plugins.tab` contribution, and a deployment whose composition ships no Plugins settings section never renders that slot, so the tab was dropped silently and Settings showed no MinerU entry at all. The panel now also registers a standalone `settings.section` (with a `settings.section.icon`), which every settings dialog renders; the tab registration stays for deployments that do have the Plugins section.
+
 ## [0.1.16] - 2026-11-11
 
 ### Fixed

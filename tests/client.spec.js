@@ -64,6 +64,15 @@ describe('browser bundle contract', () => {
       expect(harness.bind).toHaveBeenCalledWith('dsh-mineru');
       const settings = harness.slots.find(({ meta }) => meta.name === 'settings.plugins.tab');
       expect(settings.component().props.children).toBe('Loading MinerU settings…');
+      // A deployment without the Plugins settings section never renders the
+      // tab above, so the panel must also carry its own settings section.
+      const section = harness.slots.find(({ meta }) => meta.name === 'settings.section');
+      expect(section.meta.id).toBe('mineru');
+      expect(section.meta.label()).toBe('MinerU');
+      expect(section.component().props.children).toBe('Loading MinerU settings…');
+      const icon = harness.slots.find(({ meta }) => meta.name === 'settings.section.icon');
+      expect(icon.meta.id).toBe('mineru');
+      expect(icon.component({ size: 18 }).props.width).toBe(18);
       expect(harness.slots.filter(({ meta }) => meta.name === 'tool.call.toolview')).toHaveLength(3);
       expect(harness.observe).toHaveBeenCalledTimes(1);
     } finally {
