@@ -2,6 +2,17 @@
 
 All notable changes to **dsh-mineru** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/), and versioning follows [Semantic Versioning](https://semver.org/lang/zh-CN/). 版本号唯一来源是 `package.json`。
 
+## [0.1.16] - 2026-11-11
+
+### Fixed
+
+- Result downloads no longer die on a hijacked result CDN. Campus/ISP DNS can answer `cdn-mineru.openxlab.org.cn` with a loopback address (`127.0.0.1` / `::1`), which turned the whole parse into `MinerU 结果下载失败：fetch failed` even though the batch had already run and been billed. `lib/dns-resolve.js` now builds a `lookup` callback that keeps trusting the system resolver whenever it returns a usable address and only falls back to public resolvers (`223.5.5.5`, `119.29.29.29`, UDP 53, 10-minute per-host cache) when every answer is loopback. The download path stays on `fetch` first and only switches to `node:http(s)` with that lookup when the transport itself fails, so injected test doubles and proxies still behave.
+- The fallback resolver speaks the promise API (`node:dns/promises`). Importing the callback `Resolver` from `node:dns` threw `ERR_INVALID_ARG_TYPE` on the first real query — every mocked test passed, and only a live download exposed it.
+
+### Tests
+
+- `tests/dns-resolve.spec.js` (9 cases): loopback classification, usable system answers short-circuiting the fallback, hijacked answers falling back, per-host caching, `all: true` array shape, `family` filtering, and error passthrough when both resolvers fail.
+
 ## [0.1.15] - 2026-10-24
 
 ### Fixed

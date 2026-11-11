@@ -429,6 +429,7 @@ Plugin behavior:
 | `MINERU_TOKEN_REQUIRED` | Token-required operation without a token | Configure a token or use Agent mode |
 | `MINERU_UNSUPPORTED_TYPE` | Format unsupported by the current API | Switch format or API mode |
 | `MINERU_BATCH_TOO_LARGE` | Batch exceeds 1000 items | Split into multiple calls |
+| `MINERU_DOWNLOAD_FAILED` | The result zip could not be downloaded (HTTP error or transport failure) | Check that the result CDN resolves to a real address — see the DNS question in the FAQ; 0.1.16+ falls back to public resolvers automatically |
 
 Every error is mapped to an **actionable message** instead of a raw code.
 
@@ -460,6 +461,9 @@ Yes. It falls back to the tokenless Agent API (≤ 10 MB, ≤ 20 pages, Markdown
 
 **Q: Why is only `mineru_activate` in my tool list?**
 That is progressive exposure by design. Call `mineru_activate` once and the other three tools unlock; or set `exposeMode: always` to register everything globally.
+
+**Q: A parse fails with `MINERU_DOWNLOAD_FAILED` / `fetch failed`, but the batch obviously ran?**
+Look up `cdn-mineru.openxlab.org.cn` on that machine. Some campus and ISP resolvers answer public CDN hosts with a loopback address; the upload and the batch then succeed, and only the result download dies. Since 0.1.16 the download path keeps using the system resolver while it returns a usable address and falls back to public resolvers (`223.5.5.5`, `119.29.29.29`) only when every answer is loopback — no hosts edit, no proxy. Already-submitted batches are reused, so collecting the result again costs no extra quota.
 
 **Q: My parse timed out — is the file lost?**
 No. The task keeps running on MinerU's servers; use `mineru_task` (`taskId` + `api`) anytime to query progress and collect the result without resubmitting.

@@ -401,6 +401,7 @@ Token 每次操作实时解析——**轮换后下一次调用立即生效，无
 | `MINERU_TOKEN_REQUIRED` | 需要 Token 的操作未配 Token | 配置 Token 或改用 Agent 模式 |
 | `MINERU_UNSUPPORTED_TYPE` | 该格式不被当前 API 支持 | 换格式或换 API 模式 |
 | `MINERU_BATCH_TOO_LARGE` | 单次批量超过 1000 个 | 拆分后多次调用 |
+| `MINERU_DOWNLOAD_FAILED` | 结果 zip 下载失败（HTTP 错误或传输层失败） | 先查结果 CDN 是否解析到真实地址（见 FAQ「下载失败」一条）；0.1.16 起会自动回退公网解析 |
 
 所有错误都会映射为**可操作的中文提示**，而不是原始错误码。
 
@@ -432,6 +433,9 @@ Token 每次操作实时解析——**轮换后下一次调用立即生效，无
 
 **Q：为什么工具列表里只有 `mineru_activate`？**
 这是渐进式曝光设计。调用一次 `mineru_activate`，其余三个工具立即解锁；或者把配置项 `exposeMode` 改为 `always` 全局注册。
+
+**Q：解析报 `MINERU_DOWNLOAD_FAILED` / `fetch failed`，但批次明明是成功的？**
+先在这台机器上查一下 `cdn-mineru.openxlab.org.cn` 的解析结果。部分校园网/运营商 DNS 会把结果 CDN 应答成回环地址（`127.0.0.1` / `::1`）：上传与建批都正常，只有最后下载结果 zip 必挂。0.1.16 起下载走「系统解析只要给出可用地址就用系统结果，全部是回环才回退公网解析（`223.5.5.5`、`119.29.29.29`）」的兜底，不需要改 hosts、不需要代理。已经提交过的批次会被复用，重新收集结果不额外扣额度。
 
 **Q：解析超时了，文件会不会丢？**
 不会。任务在 MinerU 服务端继续执行，用 `mineru_task`（`taskId` + `api`）随时查询进度并收集结果，无需重新提交。
