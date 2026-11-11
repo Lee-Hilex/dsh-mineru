@@ -136,6 +136,29 @@ describe('resolveOptions', () => {
   });
 });
 
+describe('parsePayloadError', () => {
+  const client = new MineruClient({ baseUrl: 'https://mineru.test' });
+
+  it('keeps the vendor wording next to the mapped message', () => {
+    const err = client.parsePayloadError({ code: -60017, msg: 'retry limit reached (5 attempts), please replace the file' }, 'precision');
+    expect(err).toBeInstanceOf(MineruError);
+    expect(err.code).toBe('MINERU_API');
+    expect(err.message).toContain('5 次');
+    expect(err.message).toContain('retry limit reached (5 attempts), please replace the file');
+  });
+
+  it('appends the vendor failure text for a per-file failure', () => {
+    const err = client.parsePayloadError({ code: 0, data: { err_code: -60003, err_msg: 'file read failed' } }, 'precision');
+    expect(err.message).toContain('文件读取失败');
+    expect(err.message).toContain('file read failed');
+  });
+
+  it('falls back to the vendor message for an unmapped code', () => {
+    const err = client.parsePayloadError({ code: -99999, msg: 'boom' }, 'precision');
+    expect(err.message).toBe('MinerU 接口错误：boom');
+  });
+});
+
 describe('effectiveModelFor', () => {
   it('force-pins HTML files to MinerU-HTML', () => {
     expect(effectiveModelFor('.html', 'vlm')).toEqual({ modelVersion: 'MinerU-HTML', forced: true });

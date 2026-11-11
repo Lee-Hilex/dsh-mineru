@@ -2,6 +2,13 @@
 
 All notable changes to **dsh-mineru** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/), and versioning follows [Semantic Versioning](https://semver.org/lang/zh-CN/). 版本号唯一来源是 `package.json`。
 
+## [0.1.18] - 2026-11-11
+
+### Fixed
+
+- The Settings card's **Test token** button failed for perfectly healthy tokens. It submitted the vendor's own demo PDF (`cdn-mineru.openxlab.org.cn/demo/example.pdf`) through URL mode with `vlm`, and MinerU now rejects exactly that combination at submit time with `-60017 retry limit reached (5 attempts), please replace the file`, so the card reported a token problem that did not exist. The probe is now a 1-page PDF embedded in the package (`lib/token-probe.js`): it is written to a temp file, uploaded through the precision API and polled to `done`, which exercises the credential plus the signed upload/poll/download chain in one call. The test costs about one page of quota, uses the configured `modelVersion` instead of a hard-coded `vlm`, and no longer depends on any third-party file staying online.
+- MinerU error messages now keep the vendor's own words. `parsePayloadError` appends `（MinerU 原文：…）` to the mapped Chinese summary for both top-level `msg` and per-file `err_msg`, and the `-60017` text no longer claims the user must wait for a model upgrade — it names the retry limit and suggests switching the model version to `pipeline`.
+
 ## [0.1.17] - 2026-11-11
 
 ### Fixed
